@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Zap, Send, Trash2, MessageSquare, AlertCircle, BarChart2, Search, Shield } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateAIResponse } from '../services/geminiService';
 
 const QUICK_PROMPTS = [
   { icon: AlertCircle,  text: 'Summarize all CRITICAL alerts from the last hour',       color: 'var(--risk-critical)' },
@@ -87,28 +87,16 @@ export default function AIAnalyst() {
     setLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       const txSummary = store.transactions.slice(0, 10).map(tx =>
         `${tx.chain} | $${Math.floor(tx.valueUsd).toLocaleString()} | Score: ${tx.fraudScore} | ${tx.threatLevel}`
       ).join('\n');
 
       const systemContext = `You are FinGuard AI, an expert AML and blockchain fraud analyst. You have access to real-time transaction data. Current context: ${context === 'live' ? `Live Feed (${store.transactions.length} txns)\n\nTop transactions:\n${txSummary}` : 'No data uploaded'}. Threat index: ${store.stats?.threatIndex || 42}/100. Answer concisely and professionally.`;
 
-      if (apiKey && apiKey !== 'your_github_secret_gemini_key_here') {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent(`${systemContext}\n\nUser: ${prompt}`);
-        const aiResponse = result.response.text();
-        setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
-      } else {
-        await new Promise(r => setTimeout(r, 1200));
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: `**Analysis for:** "${prompt}"\n\nBased on the current live feed with ${store.transactions.length} transactions and a threat index of ${store.stats?.threatIndex || 42}/100:\n\n**Key Findings:**\n• ${store.transactions.filter(t => t.fraudScore > 85).length} CRITICAL transactions detected requiring immediate review\n• Dominant pattern: Large-value transfers to unknown wallets\n• Suspected structuring activity across ${store.transactions.filter(t => t.fraudScore > 60).length} flagged addresses\n\n**Recommendation:** File SAR reports for the top 3 flagged addresses and initiate enhanced due diligence (EDD) procedures.\n\n*Note: Connect Gemini API key in .env for live analysis.*`
-        }]);
-      }
+      const aiResponse = await generateAIResponse(`${systemContext}\n\nUser: ${prompt}`);
+      setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}. Please check your Gemini API key in the .env file.` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}. Please check your connection.` }]);
     } finally {
       setLoading(false);
     }

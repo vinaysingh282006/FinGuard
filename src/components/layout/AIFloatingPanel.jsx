@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateAIResponseStream } from '../../services/geminiService';
 import { 
   Zap, X, Send, Terminal, Brain, Volume2, VolumeX, 
   Play, ChevronRight, AlertCircle, Fingerprint, FileText, 
@@ -111,59 +111,6 @@ CURRENT STATE CONTEXT:
 When answering questions, tie in the active context and the session memory variables if relevant. If analyzing a wallet or transaction, perform a deep explanation of layering, structuring, or velocity concerns. Keep explanations technical but concise.`;
   };
 
-  // Simulated AI Streaming fallbacks for demo comfort
-  const runSimulatedStream = async (prompt, systemContext, isCopilot = false, phase = 1) => {
-    setLoading(true);
-    setStreamingText('');
-
-    let mockText = '';
-    if (isCopilot) {
-      const txHash = selectedTransaction?.hash || '';
-      const walletAddr = selectedAddress || '';
-      const entity = selectedTransaction ? `Tx [${txHash.substring(0, 8)}]` : selectedAddress ? `Wallet [${walletAddr.substring(0, 8)}]` : 'Active Network Node';
-      if (phase === 1) {
-        mockText = `**[COPILOT PHASE 1: INGRESS RISK ANALYSIS]**\n\nInitiating investigation on **${entity}**:\n• **Sanctions Registry Match:** cross-checking against OFAC and global consolidated watchlists. Results: *CLEAN* or *INDIRECT CONNECTION* detected through intermediate transfers.\n• **IP/Geo Audit:** Source node mapped to high-risk location. Network access latency suggests VPN/proxy tunneling obfuscation.\n• **Account Age & Seed Origin:** Origin wallet is relatively new (created within 48 hours). Seed funds originated from a non-custodial decentralized liquidity pool.\n\n**Risk Scoring Assessment:** High probability of anonymous onboarding setup. Proceeding to Phase 2 for flow rate calculations...`;
-      } else if (phase === 2) {
-        mockText = `**[COPILOT PHASE 2: VELOCITY & LAYERING INVESTIGATION]**\n\nTracing transfer sequence from **${entity}**:\n• **Layering Check:** Detected multiple sequential low-volume routing transactions through 4 intermediary wallets within a 9-minute interval. This is highly consistent with **smurfing/structuring patterns** designed to bypass AML compliance thresholds.\n• **Velocity Index:** Cumulative volume moved is **$${Math.floor(selectedTransaction ? selectedTransaction.valueUsd : 450000).toLocaleString()} USD**. Transfer rate exceeds normal commercial velocity parameters by **240%**.\n• **Split Routing:** Value split into uneven fractions and routed concurrently to obscure the direct audit trail.\n\n**Recommendation:** Layering signatures confirmed. Proceeding to Integration phase check.`;
-      } else if (phase === 3) {
-        mockText = `**[COPILOT PHASE 3: INTEGRATION POOLS DETECTION]**\n\nAnalyzing terminal egress destinations for **${entity}**:\n• **Privacy Protocol Ingress:** Traced 42% of the split funds routing towards a known **privacy mixer contract (Tornado Cash)**.\n• **Non-Custodial Bridges:** Remaining funds have been exchanged via cross-chain bridges into anonymous gas tokens.\n• **Target Exchange Egress:** Found destination hops connecting to accounts on exchanges lacking active compliance enforcement.\n\n**Conclusion:** Integration phase is active. Funds are currently in the process of anonymization and distribution. Immediate mitigation required.`;
-      } else {
-        mockText = `**[COPILOT PHASE 4: COMPLIANCE RESOLUTION & SAR]**\n\nGenerating Action Plan for **${entity}**:\n\n**1. Emergency Interventions:**\n• Notify central liquidity partners to blacklist target destination wallets.\n• Halt withdrawal channels linked to the originating session address.\n\n**2. SAR Filing Draft Narrative:**\n*"At ${new Date().toLocaleTimeString()} UTC, the FinGuard X platform detected a circular layering pattern originating from address ${selectedAddress || 'target node'}. Funds totaling $${Math.floor(selectedTransaction ? selectedTransaction.valueUsd : 450000).toLocaleString()} USD were systematically structured across multiple intermediate hops and integrated into mixer pools. This sequence resembles historical Lazarus-affiliated routing patterns."*\n\n**Status:** Intelligence package compiled. Ready for compliance download.`;
-      }
-    } else {
-      if (prompt.toLowerCase().includes('summarize') || prompt.toLowerCase().includes('anomalies')) {
-        mockText = `**Active Command Console Anomalies Summary:**\n\n• **FTI Threat Index:** currently reading **${threatIndex}/100** due to elevated transaction counts and suspicious routing flags.\n• **Detected laundering loops:** ${recentAlerts.filter(a => a.threatLevel === 'CRITICAL').length} critical circular flows active on Ethereum.\n• **Whale Activity:** 2 whale movements exceeding $10M USDT flagged as high-velocity redistributions, indicating defensive market shifts or migration.\n• **Target Watchlist:** Lazarus exploit address is active and routing transactions via nested bridge hops.\n\n**Actionable Advice:** Initiate Copilot Forensics on the latest critical alert, or download the SAR Compliance summary from the Report Center.`;
-      } else if (prompt.toLowerCase().includes('predict') || prompt.toLowerCase().includes('forecast')) {
-        mockText = `**FinGuard Threat Index Anomaly Forecast:**\n\nBased on neural pattern matching and transaction velocity on active pools:\n• **Next 4 Hours:** Threat index predicted to **increase by 8 points** (moving to ~${Math.min(100, threatIndex + 8)}) due to ongoing circular routes.\n• **Probability of Laundering Evasion:** **87%** if destination bridge pools remain unchecked.\n• **Active Risk Vector:** Rapid token splitting (smurfing) across EVM layers.\n\n**Preemptive Defense Recommendation:** Deploy localized AML evasion filters and auto-flag multi-hop splits below $15k USD.`;
-      } else if (selectedAddress && (prompt.toLowerCase().includes('wallet') || prompt.toLowerCase().includes('address') || prompt.toLowerCase().includes('forensic'))) {
-        mockText = `**AML Wallet Forensics: Address ${selectedAddress}**\n\n• **Threat Classification:** High-Risk Layering Node.\n• **Historical Correlation:** 94% match with known structuring addresses routed through Tornado Cash mixers.\n• **Associated Volume:** $2.4M USD over 14 interactions.\n• **Behavioral Fingerprint:** High transaction frequency, short holding times (less than 3 minutes), and multi-asset routing.\n\n*Intelligence Suggestion:* Restrict outbound withdrawals for this node and draft a suspicious activity record (SAR).`;
-      } else if (selectedTransaction && (prompt.toLowerCase().includes('threat') || prompt.toLowerCase().includes('explain') || prompt.toLowerCase().includes('tx'))) {
-        const txHash = selectedTransaction?.hash || '';
-        mockText = `**Threat Evaluation: Transaction ${txHash.substring(0, 16)}...**\n\n• **Chain:** ${selectedTransaction.chain}\n• **Value:** $${Math.floor(selectedTransaction.valueUsd).toLocaleString()} USD\n• **Risk Score:** ${selectedTransaction.fraudScore}/100 (${selectedTransaction.threatLevel})\n• **Anomaly Signature:** ${selectedTransaction.reason || 'High volume transfer'}\n\n**Analysis:**\nThis transfer exhibits clear **layering behavior**. Funds were moved rapidly after deposit from an unknown exchange. Velocity filters flags this transaction due to the night-time execution and immediate split-transfer routing.`;
-      } else {
-        mockText = `**Analysis Complete (FinGuard AI Platform):**\n\nBased on your prompt: *"${prompt}"*\n\n1. **Active Context:** Currently monitoring page **${activeTab}**.\n2. **Platform Diagnostics:** Threat index is at **${threatIndex}/100**. ${recentAlerts.length} security flags have been recorded.\n3. **Investigation Insight:** Standard transaction streams show moderate activity. We recommend running a "Tactical Anomalies Only" filter on the Live Feed page to isolate the high-risk flows.\n\n*For real-time generative intelligence, configure VITE_GEMINI_API_KEY in the .env.local file.*`;
-      }
-    }
-
-    // Speech announcement for responses (if enabled)
-    if (speechEnabled) {
-      audioEngine.speakAlert(isCopilot ? `Phase ${phase} analysis complete.` : "Analysis generated.");
-    }
-
-    // Typewriter effect simulation
-    let currentText = '';
-    const words = mockText.split(' ');
-    for (let i = 0; i < words.length; i++) {
-      currentText += (i === 0 ? '' : ' ') + words[i];
-      setStreamingText(currentText);
-      await new Promise(r => setTimeout(r, 20 + Math.random() * 20)); // typing speed
-    }
-
-    setMessages(prev => [...prev, { role: 'assistant', content: mockText }]);
-    setStreamingText('');
-    setLoading(false);
-  };
-
   // Trigger prompt via API or Fallback
   const triggerAIPrompt = async (prompt) => {
     if (loading) return;
@@ -173,47 +120,35 @@ When answering questions, tie in the active context and the session memory varia
     setMessages(prev => [...prev, userMsg]);
     store.addQuestionToMemory(prompt);
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    setLoading(true);
+    setStreamingText('');
     const systemContext = generateSystemInstruction();
 
-    // Check if API key is valid
-    if (apiKey && apiKey !== 'your_gemini_api_key_here' && apiKey !== 'your_github_secret_gemini_key_here') {
-      setLoading(true);
+    try {
+      await generateAIResponseStream(
+        prompt,
+        (text) => setStreamingText(text),
+        (completeText) => {
+          setMessages(prev => [...prev, { role: 'assistant', content: completeText }]);
+          if (speechEnabled) {
+            const isCopilot = prompt.toLowerCase().includes('copilot') || prompt.toLowerCase().includes('phase');
+            if (isCopilot) {
+              const phaseMatch = prompt.match(/phase\s*(\d+)/i);
+              const phase = phaseMatch ? phaseMatch[1] : '1';
+              audioEngine.speakAlert(`Phase ${phase} analysis complete.`);
+            } else {
+              audioEngine.speakAlert("Analysis generated.");
+            }
+          }
+        },
+        systemContext
+      );
+    } catch (err) {
+      console.error('Gemini API Error:', err);
+      setMessages(prev => [...prev, { role: 'assistant', content: `**Cognitive Connection Error:** ${err.message}. Reverting to local threat database diagnostics.` }]);
+    } finally {
       setStreamingText('');
-      try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        // We use gemini-1.5-flash which supports fast responses and instructions
-        const model = genAI.getGenerativeModel({ 
-          model: 'gemini-1.5-flash',
-          systemInstruction: systemContext
-        });
-
-        // Use streaming API
-        const result = await model.generateContentStream(prompt);
-        let completeText = '';
-        
-        for await (const chunk of result.stream) {
-          const chunkText = chunk.text();
-          completeText += chunkText;
-          setStreamingText(completeText);
-        }
-
-        setMessages(prev => [...prev, { role: 'assistant', content: completeText }]);
-        if (speechEnabled) {
-          audioEngine.speakAlert("Forensic analysis streaming complete.");
-        }
-      } catch (err) {
-        console.error('Gemini API Error:', err);
-        setMessages(prev => [...prev, { role: 'assistant', content: `**Cognitive Connection Error:** ${err.message}. Reverting to local threat database diagnostics.` }]);
-        // Fallback to simulation
-        await runSimulatedStream(prompt, systemContext);
-      } finally {
-        setStreamingText('');
-        setLoading(false);
-      }
-    } else {
-      // Fallback
-      await runSimulatedStream(prompt, systemContext);
+      setLoading(false);
     }
   };
 
@@ -246,15 +181,7 @@ When answering questions, tie in the active context and the session memory varia
     const entity = selectedTransaction ? `transaction ${selectedTransaction.hash}` : selectedAddress ? `wallet address ${selectedAddress}` : 'the current active threat cluster';
     const copilotPrompt = `Continue Copilot Forensic Investigation. Run Phase ${nextPhase} analysis on ${entity}.`;
     
-    // Call simulated or actual API with phase instructions
-    const systemContext = generateSystemInstruction() + `\nFocus specifically on Phase ${nextPhase} checks.`;
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-    if (apiKey && apiKey !== 'your_gemini_api_key_here' && apiKey !== 'your_github_secret_gemini_key_here') {
-      triggerAIPrompt(copilotPrompt);
-    } else {
-      runSimulatedStream(copilotPrompt, systemContext, true, nextPhase);
-    }
+    triggerAIPrompt(copilotPrompt);
   };
 
   const resetCopilot = () => {

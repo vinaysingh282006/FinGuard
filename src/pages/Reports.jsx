@@ -8,7 +8,7 @@ import { formatCurrency, formatDate } from '../utils/formatters';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { audioEngine } from '../services/audioEngine';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateAIResponse } from '../services/geminiService';
 
 export default function Reports() {
   const store = useStore();
@@ -222,20 +222,11 @@ export default function Reports() {
                   setNarrative("Drafting SAR intelligence via Gemini AI...");
                   
                   try {
-                    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-                    if (apiKey && apiKey !== 'your_gemini_api_key_here' && apiKey !== 'your_github_secret_gemini_key_here') {
-                      const genAI = new GoogleGenerativeAI(apiKey);
-                      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-                      const prompt = `Write a professional, enterprise-grade, highly technical, and concise suspicious activity report (SAR) compliance narrative for: ${targetStr}. Describe layering, structuring, and potential mixer pooling. Limit to 100 words.`;
-                      const result = await model.generateContent(prompt);
-                      setNarrative(result.response.text());
-                    } else {
-                      setTimeout(() => {
-                        setNarrative(`[SUSPICIOUS ACTIVITY REPORT SUMMARY]\n\nAt ${new Date().toLocaleTimeString()} UTC, the automated AML detection system identified a critical structuring chain. Originating wallet routed funds totaling $${selectedTx ? Math.floor(selectedTx.valueUsd).toLocaleString() : '1,092,000'} USD via multi-hop split routing into intermediate contract addresses. The transaction velocity and night-time activity correlate with historical mixer obfuscation techniques. Recommend immediate freezing of outbound withdrawal rails.`);
-                      }, 1000);
-                    }
+                    const prompt = `Write a professional, enterprise-grade, highly technical, and concise suspicious activity report (SAR) compliance narrative for: ${targetStr}. Describe layering, structuring, and potential mixer pooling. Limit to 100 words.`;
+                    const response = await generateAIResponse(prompt);
+                    setNarrative(response);
                   } catch (e) {
-                    setNarrative(`Inference failure: ${e.message}. Setup VITE_GEMINI_API_KEY inside .env.local.`);
+                    setNarrative(`Inference failure: ${e.message}.`);
                   }
                 }}
                 className="btn-ghost"

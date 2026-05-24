@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateAIResponse } from '../services/geminiService';
 import { audioEngine } from '../services/audioEngine';
 
 export default function WhaleTracker() {
@@ -42,7 +42,6 @@ export default function WhaleTracker() {
     setAiReport('');
     audioEngine.playWarning();
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     const systemPrompt = `You are a military-grade financial threat intelligence bot. 
 Analyze this high-volume crypto transaction:
 - Chain: ${w.chain}
@@ -54,43 +53,27 @@ Analyze this high-volume crypto transaction:
 
 Provide a concise, ultra-futuristic cyber threat narrative explaining if this represents layering, exchange dump, wallet splitting, or standard cold storage migration. Use terms like 'smurfing', 'layering chains', 'OTC liquidation', and 'OFAC indicators'. Keep it under 150 words.`;
 
-    if (apiKey && apiKey !== 'your_github_secret_gemini_key_here') {
-      try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent(systemPrompt);
-        const responseText = await result.response.text();
-        setAiReport(responseText);
+    try {
+      const response = await generateAIResponse(systemPrompt);
+      if (!response) {
         setAiLoading(false);
         return;
-      } catch (error) {
-        console.error('Gemini API failed in WhaleTracker, fallback to simulation', error);
       }
+      
+      let index = 0;
+      const timer = setInterval(() => {
+        if (index < response.length) {
+          setAiReport((prev) => prev + response[index]);
+          index++;
+        } else {
+          clearInterval(timer);
+          setAiLoading(false);
+        }
+      }, 5);
+    } catch (error) {
+      console.error('Failed to generate whale analysis:', error);
+      setAiLoading(false);
     }
-
-    // Fallback simulation
-    const simulatedText = `[AI INTEL SCAN ACTIVE]
-COGNITIVE REPORT: Whale Movement Detected.
-- SEVERITY: ${w.valueUsd > 3000000 ? 'CRITICAL RISK (LEVEL 4)' : 'HIGH THREAT PROFILE'}
-- PATTERN: Large-value asset split signature detected.
-
-ANALYSIS:
-Origin wallet ${w.from} initiated a ${formatCurrency(w.valueUsd)} dispatch. The transaction profile aligns with a layering cash-out sequence:
-1. Multi-path splitting is active across 12 newly deployed nodes.
-2. An abnormal velocity has been logged on the chain.
-3. Destination hubs point to OTC deposit nodes in high-risk zones.
-
-RECOMMENDATION: Flag downstream addresses for automated isolation. Activate compliance triggers.`;
-
-    let index = 0;
-    const timer = setInterval(() => {
-      setAiReport((prev) => prev + simulatedText[index]);
-      index++;
-      if (index >= simulatedText.length - 1) {
-        clearInterval(timer);
-        setAiLoading(false);
-      }
-    }, 6);
   };
 
   const selectWhale = (w) => {

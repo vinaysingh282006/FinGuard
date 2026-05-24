@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { lookupAddressIntel } from '../services/addressService';
+import { lookupAddressIntel } from '../services/blockchainService';
 import { 
   Search, ShieldAlert, Cpu, ArrowUpRight, ArrowDownLeft, 
   Coins, Activity, Calendar, Award, ExternalLink 
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import BehavioralFingerprint from '../components/shared/BehavioralFingerprint';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateAIResponse } from '../services/geminiService';
 import { audioEngine } from '../services/audioEngine';
 
 // FTI Gauge component
@@ -87,7 +87,6 @@ export default function AddressLookup() {
     setAiLoading(true);
     setAiReport('');
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     const systemPrompt = `You are an expert blockchain forensics agent. 
 Analyze the intelligence profile of this wallet address:
 - Address: ${data.address}
@@ -100,38 +99,27 @@ Analyze the intelligence profile of this wallet address:
 
 Generate a concise threat summary explaining if this wallet represents a laundering risk, sanctioned entity, privacy mixer, or safe user. Explain counterparty risk under the heading 'THREAT INTELLIGENCE SUMMARY:'. Keep it under 140 words.`;
 
-    if (apiKey && apiKey !== 'your_github_secret_gemini_key_here') {
-      try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent(systemPrompt);
-        const responseText = await result.response.text();
-        setAiReport(responseText);
+    try {
+      const response = await generateAIResponse(systemPrompt);
+      if (!response) {
         setAiLoading(false);
         return;
-      } catch (error) {
-        console.error('Gemini API failed in AddressLookup, fallback to simulation', error);
       }
+      
+      let index = 0;
+      const timer = setInterval(() => {
+        if (index < response.length) {
+          setAiReport((prev) => prev + response[index]);
+          index++;
+        } else {
+          clearInterval(timer);
+          setAiLoading(false);
+        }
+      }, 5);
+    } catch (error) {
+      console.error('Failed to generate AI evaluation:', error);
+      setAiLoading(false);
     }
-
-    // Fallback simulation
-    const simulatedText = `THREAT INTELLIGENCE SUMMARY:
-Target address is classified as ${data.riskLevel} (${data.riskScore}/100 FTI). 
-Entity ownership resolves to: ${data.owner}. 
-
-The account exhibits high-frequency interactions consistent with: ${data.behavioralProfile}. 
-Flow volume totaling ${formatCurrency(data.totalReceivedUsd + data.totalSentUsd)} has been logged. 
-Counterparty risk remains ${data.riskLevel === 'SAFE' ? 'LOW; proceed with standard transaction validation.' : 'EXTREMELY HIGH; recommend immediate wallet mapping and regulatory watchlisting.'}`;
-
-    let index = 0;
-    const timer = setInterval(() => {
-      setAiReport((prev) => prev + simulatedText[index]);
-      index++;
-      if (index >= simulatedText.length - 1) {
-        clearInterval(timer);
-        setAiLoading(false);
-      }
-    }, 5);
   };
 
   const handleSearchSubmit = (e) => {

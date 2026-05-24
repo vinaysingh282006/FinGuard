@@ -34,6 +34,7 @@ export const useStore = create((set, get) => ({
   isAIPanelOpen: false,
   speechEnabled: false,
   customAIPrompt: null,
+  systemAlert: null,
 
   // AI Session Memory System
   aiMemory: {
@@ -80,6 +81,8 @@ export const useStore = create((set, get) => ({
   setAIPanelOpen: (isOpen) => set({ isAIPanelOpen: isOpen }),
   setSpeechEnabled: (enabled) => set({ speechEnabled: enabled }),
   setCustomAIPrompt: (prompt) => set({ customAIPrompt: prompt }),
+  setSystemAlert: (alert) => set({ systemAlert: alert }),
+  clearSystemAlert: () => set({ systemAlert: null }),
 
   addVisitedAddress: (addr) =>
     set((state) => {

@@ -5,7 +5,7 @@ import RiskBadge from '../shared/RiskBadge';
 import AddressChip from '../shared/AddressChip';
 import BehavioralFingerprint from '../shared/BehavioralFingerprint';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateAIResponse } from '../../services/geminiService';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
@@ -24,8 +24,6 @@ export default function TransactionDetailPanel() {
     setAiAnalysis('');
 
     const fetchAIReport = async () => {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
       const systemPrompt = `You are an expert Anti-Money Laundering (AML) Compliance Officer and Blockchain Threat Intelligence Analyst. 
 Analyze the following transaction and provide a detailed forensic intelligence report:
 - Chain: ${tx.chain}
@@ -44,53 +42,29 @@ Output a professional, concise summary under three headings:
 
 Be specific and use intelligence-grade professional jargon (e.g. structuring, smurfing, layering, OFAC compliance). Keep it under 250 words.`;
 
-      if (apiKey && apiKey !== 'your_github_secret_gemini_key_here') {
-        try {
-          const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-          const result = await model.generateContent(systemPrompt);
-          const responseText = await result.response.text();
-          setAiAnalysis(responseText);
+      try {
+        const response = await generateAIResponse(systemPrompt);
+        if (!response) {
           setLoading(false);
           return;
-        } catch (error) {
-          console.error('Gemini API call failed, falling back to simulation', error);
         }
+
+        let index = 0;
+        const timer = setInterval(() => {
+          if (index < response.length) {
+            setAiAnalysis((prev) => prev + response[index]);
+            index++;
+          } else {
+            clearInterval(timer);
+            setLoading(false);
+          }
+        }, 5);
+
+        return () => clearInterval(timer);
+      } catch (error) {
+        console.error('Failed to generate AI analysis report:', error);
+        setLoading(false);
       }
-
-      // Simulation fallback: stream characters slowly to simulate real AI analysis
-      let index = 0;
-      const simulatedText = `[AUTOMATED NEURAL ANALYSIS]
-ANALYSIS REPORT FOR TRANSACTION: ${tx.hash.substring(0, 10)}...
-
-1. ANOMALY DETECTION REPORT:
-This transfer of ${formatCurrency(tx.valueUsd)} exhibits high-risk structuring behaviors. ${
-        tx.threatLevel === 'FRAUD NETWORK DETECTED'
-          ? 'Direct interactions detected with OFAC sanctioned list addresses, indicating severe cyber exploit or state-sponsored evasion laundering.'
-          : tx.threatLevel === 'ACTIVE LAUNDERING'
-          ? 'Routing shows direct interactions with known privacy mixers (Tornado Cash pool), attempting to obscure the origin of funds.'
-          : 'Volume structure is indicative of potential layering or smurfing, bypassing standard commercial thresholds.'
-      }
-
-2. COUNTERPARTY INTELLIGENCE:
-- Originating Node: ${tx.from} matches characteristics of a high-velocity cluster.
-- Destination Node: ${tx.to} exhibits immediate multi-hop outbound routing.
-
-3. MITIGATION RECOMMENDATION:
-- File a Suspicious Activity Report (SAR) with FinCEN immediately.
-- flag destination address as high-risk in platform watchlists.
-- Freeze withdrawal channels associated with originating account.`;
-
-      const timer = setInterval(() => {
-        setAiAnalysis((prev) => prev + simulatedText[index]);
-        index++;
-        if (index >= simulatedText.length - 1) {
-          clearInterval(timer);
-          setLoading(false);
-        }
-      }, 5);
-
-      return () => clearInterval(timer);
     };
 
     fetchAIReport();

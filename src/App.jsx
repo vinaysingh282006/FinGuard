@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from './store/useStore';
 import { startPricePolling, stopPricePolling } from './services/coingeckoService';
-import { startMempoolFeed, stopMempoolFeed } from './services/mempoolService';
-import { startWhaleMonitoring, stopWhaleMonitoring } from './services/whaleAlertService';
+import { startMempoolFeed, stopMempoolFeed, startWhaleMonitoring, stopWhaleMonitoring } from './services/blockchainService';
 import { audioEngine } from './services/audioEngine';
 import TransactionDetailPanel from './components/transaction/TransactionDetailPanel';
 import Dashboard from './pages/Dashboard';
@@ -423,6 +422,171 @@ export default function App() {
       <AlertBanner visible={alertVisible} onDismiss={() => setAlertVisible(false)} store={store} />
       <TransactionDetailPanel />
       <AIFloatingPanel />
+
+      {/* Cinematic HUD Alert Overlay */}
+      {store.systemAlert && (
+        <SystemAlertOverlay alert={store.systemAlert} onDismiss={() => store.clearSystemAlert()} />
+      )}
+    </div>
+  );
+}
+
+function SystemAlertOverlay({ alert, onDismiss }) {
+  useEffect(() => {
+    try {
+      audioEngine.playCritical();
+      audioEngine.speakAlert(`Warning. Connection to blockchain database disrupted.`);
+    } catch (e) {}
+  }, [alert]);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(5, 8, 22, 0.88)',
+      backdropFilter: 'blur(12px) saturate(150%)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+      boxSizing: 'border-box'
+    }}>
+      <div style={{
+        maxWidth: 500,
+        width: '100%',
+        background: '#040712',
+        border: '2px solid rgba(255, 45, 85, 0.8)',
+        borderRadius: 16,
+        padding: 32,
+        boxShadow: '0 0 50px rgba(255, 45, 85, 0.35), inset 0 0 20px rgba(255, 45, 85, 0.08)',
+        position: 'relative',
+        overflow: 'hidden',
+        textAlign: 'center',
+        boxSizing: 'border-box'
+      }}>
+        {/* Scanlines overlay */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(rgba(255, 45, 85, 0.03) 50%, rgba(0, 0, 0, 0) 50%)',
+          backgroundSize: '100% 4px',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          background: 'rgba(255, 45, 85, 0.1)',
+          border: '1px solid #ff2d55',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 16px',
+          boxShadow: '0 0 20px rgba(255, 45, 85, 0.4)'
+        }}>
+          <ShieldAlert size={26} color="#ff2d55" className="animate-pulse" />
+        </div>
+
+        <h3 style={{
+          fontFamily: 'Space Grotesk, sans-serif',
+          fontSize: 18,
+          fontWeight: 900,
+          color: '#fff',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          margin: '0 0 6px'
+        }}>
+          {alert.title}
+        </h3>
+
+        <div style={{
+          fontSize: 10,
+          fontFamily: 'JetBrains Mono, monospace',
+          color: 'var(--text-3)',
+          letterSpacing: '0.05em',
+          marginBottom: 16
+        }}>
+          LOGGED TIME: {alert.timestamp || new Date().toLocaleTimeString()}
+        </div>
+
+        <p style={{
+          fontSize: 12.5,
+          lineHeight: 1.6,
+          color: 'var(--text-2)',
+          margin: '0 0 20px',
+          fontFamily: 'Inter, sans-serif'
+        }}>
+          {alert.message}
+        </p>
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          background: 'rgba(255, 45, 85, 0.04)',
+          border: '1px solid rgba(255, 45, 85, 0.15)',
+          padding: '10px 14px',
+          borderRadius: 8,
+          marginBottom: 20,
+          fontSize: 11,
+          fontFamily: 'JetBrains Mono, monospace',
+          color: '#ff2d55',
+          letterSpacing: '0.02em'
+        }}>
+          <span className="status-dot status-dot-critical animate-pulse" style={{ width: 6, height: 6 }} />
+          AUTOMATIC FAULT RECOVERY INTERFACE ENGAGED
+        </div>
+
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={() => {
+              audioEngine.playClick();
+              onDismiss();
+            }}
+            style={{
+              flex: 1,
+              padding: '10px 16px',
+              background: 'none',
+              border: '1px solid var(--border-1)',
+              borderRadius: 8,
+              color: 'var(--text-2)',
+              fontSize: 11.5,
+              fontWeight: 'bold',
+              fontFamily: 'Space Grotesk, sans-serif',
+              cursor: 'pointer',
+            }}
+          >
+            DISMISS HUD
+          </button>
+          <button
+            onClick={() => {
+              audioEngine.playClick();
+              onDismiss();
+            }}
+            style={{
+              flex: 1,
+              padding: '10px 16px',
+              background: '#ff2d55',
+              border: 'none',
+              borderRadius: 8,
+              color: '#fff',
+              fontSize: 11.5,
+              fontWeight: 'bold',
+              fontFamily: 'Space Grotesk, sans-serif',
+              cursor: 'pointer',
+              boxShadow: '0 0 15px rgba(255, 45, 85, 0.3)',
+            }}
+          >
+            RETRY NOW
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
