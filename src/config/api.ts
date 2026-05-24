@@ -143,6 +143,7 @@ export interface RequestOptions extends AxiosRequestConfig {
   bypassQueue?: boolean;
   retries?: number;
   retryDelayMs?: number;
+  silent?: boolean; // If true, failures will not trigger system alert UI popups
 }
 
 export async function secureRequest<T>(options: RequestOptions): Promise<T> {
@@ -154,6 +155,7 @@ export async function secureRequest<T>(options: RequestOptions): Promise<T> {
     bypassQueue = false,
     retries = 3,
     retryDelayMs = 1000,
+    silent = false,
     ...axiosConfig
   } = options;
 
@@ -184,29 +186,35 @@ export async function secureRequest<T>(options: RequestOptions): Promise<T> {
         }
 
         // Successfully recovered, clear system alert if it matches
-        dismissSystemAlert();
+        if (!silent) {
+          dismissSystemAlert();
+        }
         return response.data;
       } catch (error: any) {
         attempt++;
         if (attempt <= retries) {
           const waitTime = retryDelayMs * Math.pow(2, attempt - 1);
           console.warn(`[${apiName} API Attempt ${attempt}/${retries} failed]. Retrying in ${waitTime}ms...`, error.message);
-          dispatchSystemAlert(
-            `${apiName.toUpperCase()} CONNECTION WARNING`,
-            `Request to server failed (${error.message}). Retrying connection (Attempt ${attempt}/${retries})...`,
-            'warning'
-          );
+          if (!silent) {
+            dispatchSystemAlert(
+              `${apiName.toUpperCase()} CONNECTION WARNING`,
+              `Request to server failed (${error.message}). Retrying connection (Attempt ${attempt}/${retries})...`,
+              'warning'
+            );
+          }
           await new Promise((resolve) => setTimeout(resolve, waitTime));
           return run();
         }
 
         // Exhausted all retries
         console.error(`[${apiName} API Failed after ${retries} attempts]`, error);
-        dispatchSystemAlert(
-          `${apiName.toUpperCase()} CONNECTION ERROR`,
-          `Security node connection lost: ${error.message || 'Server unreachable'}. Switching to localized backup telemetry.`,
-          'error'
-        );
+        if (!silent) {
+          dispatchSystemAlert(
+            `${apiName.toUpperCase()} CONNECTION ERROR`,
+            `Security node connection lost: ${error.message || 'Server unreachable'}. Switching to localized backup telemetry.`,
+            'error'
+          );
+        }
         throw error;
       }
     };

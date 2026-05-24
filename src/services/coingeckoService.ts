@@ -17,7 +17,7 @@ export async function fetchCoinGeckoPrices(): Promise<Partial<PriceData>> {
   const apiKey = API_CONFIG.COINGECKO_API_KEY;
   const headers: Record<string, string> = {};
   
-  if (apiKey) {
+  if (isValidKey(apiKey)) {
     headers['x-cg-demo-api-key'] = apiKey;
   }
 
@@ -27,6 +27,7 @@ export async function fetchCoinGeckoPrices(): Promise<Partial<PriceData>> {
       method: 'GET',
       apiName: 'CoinGecko',
       cacheTtlMs: 15000, // Cache for 15 seconds to prevent rate limits
+      silent: true,      // Non-critical endpoint: fail silently in UI on rate limits
       headers,
       params: {
         ids: 'bitcoin,ethereum,solana',

@@ -38,6 +38,7 @@ export async function getEthereumWalletIntel(address: string, ethPriceUsd = 3100
         url: etherscanUrl,
         apiName: 'Etherscan',
         cacheTtlMs: 30000, // Cache for 30s
+        silent: true,      // Handle failures silently; fallback to RPC is available
         params: {
           module: 'account',
           action: 'balance',
@@ -55,6 +56,7 @@ export async function getEthereumWalletIntel(address: string, ethPriceUsd = 3100
         url: etherscanUrl,
         apiName: 'Etherscan',
         cacheTtlMs: 30000,
+        silent: true,      // Handle failures silently; fallback to RPC is available
         params: {
           module: 'account',
           action: 'txlist',

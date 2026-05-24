@@ -81,6 +81,7 @@ export async function lookupAddressIntel(address: string, prices = { BTC: 95000,
         url: `${API_URLS.MEMPOOL}/address/${cleanAddr}`,
         apiName: 'Mempool.space',
         cacheTtlMs: 20000,
+        silent: true,
       });
 
       if (btcData) {
@@ -101,6 +102,7 @@ export async function lookupAddressIntel(address: string, prices = { BTC: 95000,
           url: `${API_URLS.MEMPOOL}/address/${cleanAddr}/txs`,
           apiName: 'Mempool.space',
           cacheTtlMs: 20000,
+          silent: true,
         });
 
         if (txsRes && txsRes.length > 0) {
@@ -254,6 +256,7 @@ export function startMempoolFeed(store: any) {
         method: 'GET',
         apiName: 'Mempool.space',
         bypassQueue: true, // Bypass queue for immediate live feeds
+        silent: true,      // Handle CORS/rate limit silently with simulated fallback
       });
 
       if (Array.isArray(response) && response.length > 0) {
@@ -566,6 +569,7 @@ export function startWhaleMonitoring(store: any) {
         method: 'GET',
         apiName: 'Mempool.space',
         bypassQueue: true,
+        silent: true,
       });
 
       if (Array.isArray(recentTxResponse)) {
