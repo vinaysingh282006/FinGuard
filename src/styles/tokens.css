@@ -1,0 +1,73 @@
+/* src/styles/tokens.css */
+:root {
+  /* Existing tokens (copied from original spec) */
+  --bg-base:       #04070f;
+  --bg-sunken:     #060b18;
+  --bg-surface:    #0b1525;
+  --bg-raised:     #111e33;
+  --bg-overlay:    #18273d;
+  --glass-00: rgba(255,255,255,0.02);
+  --glass-01: rgba(255,255,255,0.04);
+  --glass-02: rgba(255,255,255,0.06);
+  --glass-03: rgba(255,255,255,0.09);
+  --glass-04: rgba(255,255,255,0.13);
+  --glass-05: rgba(255,255,255,0.20);
+  --cyan-500:      #00d4f5;
+  --cyan-400:      #33dcf7;
+  --cyan-dim:      rgba(0,212,245,0.12);
+  --cyan-glow-sm:  0 0 12px rgba(0,212,245,0.25);
+  --cyan-glow-md:  0 0 24px rgba(0,212,245,0.35), 0 0 48px rgba(0,212,245,0.12);
+  --cyan-glow-lg:  0 0 40px rgba(0,212,245,0.5),  0 0 80px rgba(0,212,245,0.18);
+  --violet-500:    #7c5cfc;
+  --violet-400:    #9b7dfd;
+  --violet-dim:    rgba(124,92,252,0.12);
+  --violet-glow:   0 0 20px rgba(124,92,252,0.35), 0 0 40px rgba(124,92,252,0.12);
+  --emerald-500:   #00d68f;
+  --emerald-dim:   rgba(0,214,143,0.12);
+  --emerald-glow:  0 0 16px rgba(0,214,143,0.3);
+  --risk-critical: #ff2d55;
+  --risk-critical-bg: rgba(255,45,85,0.10);
+  --risk-critical-border: rgba(255,45,85,0.30);
+  --risk-critical-glow: 0 0 20px rgba(255,45,85,0.40), 0 0 60px rgba(255,45,85,0.14);
+  --risk-high:     #ff6a00;
+  --risk-high-bg:  rgba(255,106,0,0.10);
+  --risk-high-border: rgba(255,106,0,0.28);
+  --risk-medium:   #f5c400;
+  --risk-medium-bg: rgba(245,196,0,0.10);
+  --risk-medium-border: rgba(245,196,0,0.28);
+  --risk-low:      #00d68f;
+  --risk-low-bg:   rgba(0,214,143,0.10);
+  --risk-low-border: rgba(0,214,143,0.28);
+  --text-1: #eef2ff;
+  --text-2: #8892b0;
+  --text-3: #4a566d;
+  --text-code: #a8b4d8;
+  --border-0: rgba(255,255,255,0.05);
+  --border-1: rgba(255,255,255,0.09);
+  --border-2: rgba(255,255,255,0.15);
+  --border-cyan: rgba(0,212,245,0.22);
+  --border-red:  rgba(255,45,85,0.32);
+  --shadow-1: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-2: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-3: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-4: 0 16px 56px rgba(0,0,0,0.65);
+  --inset-highlight: inset 0 1px 0 rgba(255,255,255,0.07);
+  --blur-sm:  blur(8px);
+  --blur-md:  blur(16px);
+  --blur-lg:  blur(28px);
+  --blur-xl:  blur(44px);
+
+  /* Premium additions */
+  --neon-cyan:   #00fff9;
+  --neon-purple: #c792ff;
+  --neon-red:    #ff4d4d;
+  --emerald-green: #00ff85;
+
+  /* Threat level colors */
+  --threat-safe:      #00d68f;   /* same as emerald */
+  --threat-watchlist: #33dcf7;   /* cyan-400 */
+  --threat-high:      #ff6a00;   /* risk-high */
+  --threat-critical:  #ff2d55;   /* risk-critical */
+  --threat-laundering:#7c5cfc;   /* violet */
+  --threat-fraud:     #ff4d4d;   /* neon-red */
+}

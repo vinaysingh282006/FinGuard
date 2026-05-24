@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuard AI | AML Sentinel Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-container": "#1adc94",
+                      "error": "#ffb4ab",
+                      "surface-container-highest": "#31353e",
+                      "surface": "#0f131c",
+                      "risk-high": "#ff6a00",
+                      "on-tertiary-fixed-variant": "#005234",
+                      "glass-border": "rgba(255, 255, 255, 0.09)",
+                      "error-container": "#93000a",
+                      "surface-dim": "#0f131c",
+                      "surface-container-high": "#262a33",
+                      "secondary": "#cabeff",
+                      "risk-critical": "#ff2d55",
+                      "tertiary-fixed": "#54feb3",
+                      "on-secondary": "#32009a",
+                      "background": "#0f131c",
+                      "risk-low": "#00d68f",
+                      "secondary-container": "#4918c8",
+                      "surface-tint": "#1ad9fa",
+                      "on-tertiary": "#003822",
+                      "on-primary-fixed-variant": "#004e5c",
+                      "inverse-primary": "#006879",
+                      "on-secondary-container": "#b9aaff",
+                      "on-tertiary-fixed": "#002112",
+                      "outline-variant": "#3c494d",
+                      "on-error": "#690005",
+                      "on-error-container": "#ffdad6",
+                      "tertiary-fixed-dim": "#27e199",
+                      "surface-variant": "#31353e",
+                      "on-background": "#dfe2ef",
+                      "surface-container": "#1c2029",
+                      "primary-container": "#00d4f5",
+                      "text-muted": "#4a566d",
+                      "surface-container-lowest": "#0a0e17",
+                      "primary": "#97eaff",
+                      "outline": "#859397",
+                      "secondary-fixed-dim": "#cabeff",
+                      "tertiary": "#4df9af",
+                      "surface-bright": "#353943",
+                      "on-tertiary-container": "#005b3a",
+                      "bg-overlay": "#18273d",
+                      "primary-fixed-dim": "#1ad9fa",
+                      "on-secondary-fixed": "#1c0062",
+                      "bg-sunken": "#060b18",
+                      "bg-surface": "#0b1525",
+                      "on-primary-fixed": "#001f26",
+                      "surface-container-low": "#171c25",
+                      "on-primary-container": "#005766",
+                      "secondary-fixed": "#e6deff",
+                      "inverse-surface": "#dfe2ef",
+                      "inverse-on-surface": "#2c303a",
+                      "primary-fixed": "#a9edff",
+                      "on-surface-variant": "#bbc9cd",
+                      "on-surface": "#dfe2ef",
+                      "text-dim": "#8892b0",
+                      "on-primary": "#003640",
+                      "on-secondary-fixed-variant": "#4918c8",
+                      "bg-raised": "#111e33",
+                      "risk-medium": "#f5c400"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xs": "8px",
+                      "lg": "32px",
+                      "container-max": "1280px",
+                      "xl": "48px",
+                      "md": "20px",
+                      "sm": "12px",
+                      "gutter": "24px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Space Grotesk"],
+                      "body-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "headline-lg": ["Space Grotesk"],
+                      "headline-xl": ["Space Grotesk"],
+                      "code-md": ["JetBrains Mono"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #04070f;
+            color: #dfe2ef;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+        .status-pulse {
+            position: relative;
+        }
+        .status-pulse::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.6;
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+        .mesh-gradient {
+            background: radial-gradient(at 0% 0%, rgba(26, 217, 250, 0.15) 0px, transparent 50%),
+                        radial-gradient(at 100% 100%, rgba(73, 24, 200, 0.15) 0px, transparent 50%);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    </style>
+</head>
+<body class="font-body-md text-body-md mesh-gradient">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-50 bg-surface-container-lowest/40 backdrop-blur-xl border-r border-glass-border flex flex-col py-lg">
+<div class="px-lg mb-xl flex flex-col gap-xs">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-container to-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" data-weight="fill">security</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary leading-tight">FinGuard AI</h1>
+<p class="text-[10px] uppercase tracking-widest text-tertiary opacity-80">Intelligent Sentinel</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-md flex flex-col gap-xs">
+<!-- Active: Dashboard -->
+<a class="flex items-center gap-sm px-md py-sm rounded-lg bg-secondary-container/20 text-tertiary-fixed border-r-2 border-tertiary-fixed font-semibold active:translate-x-1 duration-150 group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-glass-border/10 transition-all active:translate-x-1 duration-150 group" href="#">
+<span class="material-symbols-outlined" data-icon="security">security</span>
+<span>Investigations</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-glass-border/10 transition-all active:translate-x-1 duration-150 group" href="#">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+<span>Transactions</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-glass-border/10 transition-all active:translate-x-1 duration-150 group" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span>Reports</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-glass-border/10 transition-all active:translate-x-1 duration-150 group" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span>Compliance</span>
+</a>
+</nav>
+<div class="px-md mt-auto pt-lg space-y-4">
+<button class="w-full py-sm rounded-xl bg-gradient-to-r from-primary-container to-secondary-container text-on-primary font-bold shadow-lg shadow-primary-container/20 active:scale-95 duration-200">
+                New Investigation
+            </button>
+<div class="flex flex-col gap-xs border-t border-glass-border pt-md">
+<a class="flex items-center gap-sm px-md py-xs text-on-surface-variant hover:text-on-surface text-body-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-sm px-md py-xs text-on-surface-variant hover:text-on-surface text-body-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Authority: JSON) -->
+<header class="w-full sticky top-0 z-40 bg-transparent backdrop-blur-md border-b border-glass-border bg-surface-container/30 shadow-3 pl-64">
+<div class="flex justify-between items-center px-lg py-sm w-full max-w-container-max mx-auto">
+<div class="flex items-center gap-md flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full bg-glass-border/10 border border-glass-border rounded-full py-2 pl-10 pr-4 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary-container/40" placeholder="Search address, TxID, or entity..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-sm">
+<button class="p-2 rounded-full hover:bg-glass-border transition-colors relative active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-risk-critical rounded-full"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-glass-border transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-8 w-px bg-glass-border"></div>
+<div class="flex items-center gap-sm cursor-pointer group">
+<img alt="User profile avatar" class="w-8 h-8 rounded-full border border-primary-container/30 group-hover:border-primary-container transition-all" data-alt="A high-quality, professional headshot of a senior financial analyst wearing a charcoal grey suit and a modern, minimalist headset. The lighting is crisp and studio-grade, reflecting a premium fintech corporate environment. The background is a blurred, futuristic trading floor with cool blue and cyan digital displays, conveying an atmosphere of deep technical expertise and authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEuUIWvBR2s-qWmrbsEclsC_XPb6fcrOmN2nuy-Z6Zunis4sdfhrhe3pbx3qoDAWVp4Kxc5Ts-nsD1cm48H7pzpVxwh_WpTMyz9P0sPm6MX-a4S7eG_sDOIy-FxHmNUgGi7QjpU32kbbsQ6MVgWs0Lg2DdqCoMYaByJiQReWcJoUIFrjLH75v_ogr1Troi1gmtfe-yt1mxaHiCFVArAcDD0CqAvlNQgTKYdXQfOp80YnKBWjTVHqBq7g9gnQZ802NuOgsolE879UI"/>
+<span class="font-body-md text-on-surface hidden lg:block">Marcus Chen</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="pl-64 min-h-screen">
+<div class="p-lg max-w-container-max mx-auto">
+<!-- Dashboard Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-lg gap-md">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Intelligence Dashboard</h2>
+<p class="text-text-dim mt-1">Real-time anti-money laundering monitoring and neural risk assessment.</p>
+</div>
+<div class="flex gap-sm">
+<div class="flex items-center gap-2 bg-glass-border/10 px-4 py-2 rounded-lg border border-glass-border">
+<span class="w-2 h-2 rounded-full bg-risk-low status-pulse" style="color: #00d68f"></span>
+<span class="text-body-sm font-medium text-tertiary-fixed">Live Stream Active</span>
+</div>
+<button class="flex items-center gap-2 bg-glass-border/20 px-4 py-2 rounded-lg border border-glass-border hover:bg-glass-border/30 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+<span class="text-body-sm">Last 24 Hours</span>
+<span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+</div>
+<!-- KPI Row (4 glass cards) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-lg">
+<!-- KPI 1 -->
+<div class="glass-card p-md rounded-xl relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary-container/10 rounded-full blur-2xl group-hover:bg-primary-container/20 transition-all"></div>
+<div class="flex justify-between items-start mb-xs">
+<p class="text-label-caps text-on-surface-variant">Transactions Monitored</p>
+<span class="material-symbols-outlined text-primary text-xl" data-icon="query_stats">query_stats</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary" id="count-tx">1,248,302</h3>
+<p class="text-[11px] text-risk-low flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="trending_up">trending_up</span>
+                                +12.5% vs prev hour
+                            </p>
+</div>
+<div class="w-16 h-8 opacity-60">
+<!-- Placeholder for Sparkline -->
+<svg class="stroke-primary fill-none stroke-2" viewbox="0 0 100 40">
+<path d="M0,35 Q10,15 20,25 T40,10 T60,30 T80,5 T100,20"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="glass-card p-md rounded-xl relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-risk-critical/10 rounded-full blur-2xl group-hover:bg-risk-critical/20 transition-all"></div>
+<div class="flex justify-between items-start mb-xs">
+<p class="text-label-caps text-on-surface-variant">Fraud Alerts</p>
+<span class="material-symbols-outlined text-risk-critical text-xl" data-icon="emergency_home">emergency_home</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md text-risk-critical">142</h3>
+<p class="text-[11px] text-risk-critical flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="warning">warning</span>
+                                High Priority Flags
+                            </p>
+</div>
+<div class="w-16 h-8 opacity-60">
+<svg class="stroke-risk-critical fill-none stroke-2" viewbox="0 0 100 40">
+<path d="M0,10 Q20,30 40,5 T60,35 T80,15 T100,5"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="glass-card p-md rounded-xl relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-secondary-container/10 rounded-full blur-2xl group-hover:bg-secondary-container/20 transition-all"></div>
+<div class="flex justify-between items-start mb-xs">
+<p class="text-label-caps text-on-surface-variant">Whale Movements</p>
+<span class="material-symbols-outlined text-secondary text-xl" data-icon="waves">waves</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md text-secondary">89</h3>
+<p class="text-[11px] text-on-surface-variant flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="account_balance">account_balance</span>
+                                &gt;$1M Volumne
+                            </p>
+</div>
+<div class="w-16 h-8 opacity-60">
+<svg class="stroke-secondary fill-none stroke-2" viewbox="0 0 100 40">
+<path d="M0,30 L20,10 L40,35 L60,15 L80,25 L100,5"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="glass-card p-md rounded-xl relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-risk-high/10 rounded-full blur-2xl group-hover:bg-risk-high/20 transition-all"></div>
+<div class="flex justify-between items-start mb-xs">
+<p class="text-label-caps text-on-surface-variant">AML Flags</p>
+<span class="material-symbols-outlined text-risk-high text-xl" data-icon="flag">flag</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md text-risk-high">2,411</h3>
+<p class="text-[11px] text-risk-high flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="priority_high">priority_high</span>
+                                Requires Review
+                            </p>
+</div>
+<div class="w-16 h-8 opacity-60">
+<svg class="stroke-risk-high fill-none stroke-2" viewbox="0 0 100 40">
+<path d="M0,35 L20,25 L40,28 L60,5 L80,10 L100,2"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- Content Grid (60/40 Split) -->
+<div class="grid grid-cols-1 lg:grid-cols-10 gap-gutter items-start">
+<!-- Left Column (60% -> span 6) -->
+<div class="lg:col-span-6 flex flex-col gap-gutter">
+<!-- Live Transaction Feed -->
+<div class="glass-card rounded-xl overflow-hidden">
+<div class="p-md border-b border-glass-border flex justify-between items-center">
+<h4 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+                                Live Transaction Feed
+                            </h4>
+<button class="text-body-sm text-primary hover:underline">View All</button>
+</div>
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-label-caps text-on-surface-variant border-b border-glass-border">
+<th class="px-md py-sm">Chain</th>
+<th class="px-md py-sm">TxID</th>
+<th class="px-md py-sm">Amount</th>
+<th class="px-md py-sm">Risk</th>
+<th class="px-md py-sm text-right">Age</th>
+</tr>
+</thead>
+<tbody class="text-body-sm">
+<tr class="border-b border-glass-border/5 hover:bg-glass-border/5 transition-colors">
+<td class="px-md py-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="currency_bitcoin">currency_bitcoin</span>
+                                            BTC
+                                        </td>
+<td class="px-md py-sm font-code-md opacity-60">0x7a...4e1</td>
+<td class="px-md py-sm">
+<div class="font-bold">4.21 BTC</div>
+<div class="text-[10px] text-on-surface-variant">$178,421.00</div>
+</td>
+<td class="px-md py-sm">
+<span class="px-2 py-0.5 rounded text-[10px] bg-risk-low/10 text-risk-low border border-risk-low/20">LOW</span>
+</td>
+<td class="px-md py-sm text-right text-text-dim italic">2m ago</td>
+</tr>
+<tr class="border-b border-glass-border/5 hover:bg-glass-border/5 transition-colors">
+<td class="px-md py-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="database">database</span>
+                                            ETH
+                                        </td>
+<td class="px-md py-sm font-code-md opacity-60">0xfe...2d1</td>
+<td class="px-md py-sm">
+<div class="font-bold">120.0 ETH</div>
+<div class="text-[10px] text-on-surface-variant">$242,100.50</div>
+</td>
+<td class="px-md py-sm">
+<span class="px-2 py-0.5 rounded text-[10px] bg-risk-critical/10 text-risk-critical border border-risk-critical/20">CRITICAL</span>
+</td>
+<td class="px-md py-sm text-right text-text-dim italic">4m ago</td>
+</tr>
+<tr class="border-b border-glass-border/5 hover:bg-glass-border/5 transition-colors">
+<td class="px-md py-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="currency_bitcoin">currency_bitcoin</span>
+                                            BTC
+                                        </td>
+<td class="px-md py-sm font-code-md opacity-60">0x1b...99a</td>
+<td class="px-md py-sm">
+<div class="font-bold">0.05 BTC</div>
+<div class="text-[10px] text-on-surface-variant">$2,100.22</div>
+</td>
+<td class="px-md py-sm">
+<span class="px-2 py-0.5 rounded text-[10px] bg-risk-medium/10 text-risk-medium border border-risk-medium/20">MEDIUM</span>
+</td>
+<td class="px-md py-sm text-right text-text-dim italic">8m ago</td>
+</tr>
+<tr class="border-b border-glass-border/5 hover:bg-glass-border/5 transition-colors">
+<td class="px-md py-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-on-tertiary-fixed text-[20px]" data-icon="token">token</span>
+                                            SOL
+                                        </td>
+<td class="px-md py-sm font-code-md opacity-60">0x9c...3f4</td>
+<td class="px-md py-sm">
+<div class="font-bold">2,500 SOL</div>
+<div class="text-[10px] text-on-surface-variant">$255,000.00</div>
+</td>
+<td class="px-md py-sm">
+<span class="px-2 py-0.5 rounded text-[10px] bg-risk-high/10 text-risk-high border border-risk-high/20">HIGH</span>
+</td>
+<td class="px-md py-sm text-right text-text-dim italic">11m ago</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Fraud Trend Chart -->
+<div class="glass-card rounded-xl p-md">
+<div class="flex justify-between items-center mb-lg">
+<h4 class="font-headline-md text-headline-md text-on-surface">Fraud Detection Trends</h4>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-body-sm text-on-surface-variant">Prevented</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-risk-critical"></span>
+<span class="text-body-sm text-on-surface-variant">Flagged</span>
+</div>
+</div>
+</div>
+<div class="h-64 w-full relative">
+<!-- Visual Chart Mockup using SVG for fidelity -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 400 150">
+<defs>
+<lineargradient id="gradient-primary" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="rgba(26, 217, 250, 0.4)"></stop>
+<stop offset="100%" stop-color="rgba(26, 217, 250, 0)"></stop>
+</lineargradient>
+<lineargradient id="gradient-risk" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="rgba(255, 45, 85, 0.4)"></stop>
+<stop offset="100%" stop-color="rgba(255, 45, 85, 0)"></stop>
+</lineargradient>
+</defs>
+<!-- Grid Lines -->
+<line stroke="rgba(255,255,255,0.05)" x1="0" x2="400" y1="120" y2="120"></line>
+<line stroke="rgba(255,255,255,0.05)" x1="0" x2="400" y1="80" y2="80"></line>
+<line stroke="rgba(255,255,255,0.05)" x1="0" x2="400" y1="40" y2="40"></line>
+<!-- Area 1 -->
+<path d="M0,150 L0,100 Q50,110 100,70 T200,80 T300,40 T400,60 L400,150 Z" fill="url(#gradient-primary)"></path>
+<path d="M0,100 Q50,110 100,70 T200,80 T300,40 T400,60" fill="none" stroke="#1ad9fa" stroke-width="2"></path>
+<!-- Area 2 -->
+<path d="M0,150 L0,130 Q50,140 100,120 T200,140 T300,100 T400,120 L400,150 Z" fill="url(#gradient-risk)"></path>
+<path d="M0,130 Q50,140 100,120 T200,140 T300,100 T400,120" fill="none" stroke="#ff2d55" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Right Column (40% -> span 4) -->
+<div class="lg:col-span-4 flex flex-col gap-gutter">
+<!-- Risk Distribution -->
+<div class="glass-card rounded-xl p-md">
+<h4 class="font-headline-md text-headline-md text-on-surface mb-lg">Risk Distribution</h4>
+<div class="flex items-center justify-between">
+<div class="relative w-32 h-32">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="16" stroke="rgba(255,255,255,0.05)" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="none" r="16" stroke="#ff2d55" stroke-dasharray="10, 100" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="none" r="16" stroke="#ff6a00" stroke-dasharray="25, 100" stroke-dashoffset="-10" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="none" r="16" stroke="#00d68f" stroke-dasharray="65, 100" stroke-dashoffset="-35" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-body-sm text-on-surface-variant">Total</span>
+<span class="font-bold">4.2k</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-risk-low"></span>
+<span class="text-body-sm text-on-surface">Low (65%)</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-risk-high"></span>
+<span class="text-body-sm text-on-surface">High (25%)</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-risk-critical"></span>
+<span class="text-body-sm text-on-surface">Critical (10%)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Top Suspicious Addresses -->
+<div class="glass-card rounded-xl p-md">
+<h4 class="font-headline-md text-headline-md text-on-surface mb-md">Top Suspicious</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-2 rounded-lg bg-glass-border/5 border border-glass-border/10">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-risk-critical/20 flex items-center justify-center text-risk-critical">
+<span class="material-symbols-outlined text-sm" data-icon="skull">skull</span>
+</div>
+<div>
+<p class="text-body-sm font-code-md text-on-surface">0x4a...319</p>
+<p class="text-[10px] text-on-surface-variant">Score: 98.4/100</p>
+</div>
+</div>
+<span class="text-body-sm font-bold text-risk-critical">$1.2M</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-glass-border/5 border border-glass-border/10">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-risk-high/20 flex items-center justify-center text-risk-high">
+<span class="material-symbols-outlined text-sm" data-icon="hide_source">hide_source</span>
+</div>
+<div>
+<p class="text-body-sm font-code-md text-on-surface">0x8b...1f2</p>
+<p class="text-[10px] text-on-surface-variant">Score: 82.1/100</p>
+</div>
+</div>
+<span class="text-body-sm font-bold text-risk-high">$450k</span>
+</div>
+</div>
+</div>
+<!-- AI System Status -->
+<div class="glass-card rounded-xl p-md">
+<h4 class="font-headline-md text-headline-md text-on-surface mb-md">AI System Health</h4>
+<div class="grid grid-cols-1 gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary status-pulse" style="color: #4df9af"></span>
+<span class="text-body-sm text-on-surface-variant">Neural Engine</span>
+</div>
+<span class="text-[10px] bg-tertiary/10 text-tertiary px-2 py-0.5 rounded border border-tertiary/20">STABLE</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary status-pulse" style="color: #4df9af"></span>
+<span class="text-body-sm text-on-surface-variant">Chain Indexer</span>
+</div>
+<span class="text-[10px] bg-tertiary/10 text-tertiary px-2 py-0.5 rounded border border-tertiary/20">99.9% SYNC</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container status-pulse" style="color: #00d4f5"></span>
+<span class="text-body-sm text-on-surface-variant">API Gateway</span>
+</div>
+<span class="text-[10px] bg-primary-container/10 text-primary-container px-2 py-0.5 rounded border border-primary-container/20">LATENCY 12ms</span>
+</div>
+</div>
+</div>
+<!-- Geo Mini Map -->
+<div class="glass-card rounded-xl p-md relative h-48 overflow-hidden group">
+<h4 class="font-headline-md text-headline-md text-on-surface mb-2 relative z-10">High-Risk Hubs</h4>
+<div class="absolute inset-0 z-0 opacity-40 group-hover:scale-105 transition-transform duration-700">
+<img alt="World map" class="w-full h-full object-cover grayscale invert contrast-125" data-alt="A stylized, dark-themed world map with a futuristic grid overlay. The continents are rendered in deep charcoal with glowing cyan outlines. Pulsating red and orange hotspots are strategically placed over high-risk financial centers like Dubai, Zurich, and Singapore, simulating real-time AML threat detection. The overall mood is moody, atmospheric, and highly technical." data-location="Global" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAl6gif3G_w0vQBhJgtzT_t9Y1xwn5scN5GEiLW4DRKU91carexAECd9mqAWWCPZlJi45f94VWalDFFMz10rsGXH8eYv-dkUgQDF_LQZq1He7BEiHY1yhrygyyuZr8kONUpKPG33ZaswdVJgOOf6FCN_z1QZgdUWL8xyIpA-toJskM_PotBMLxIAzLYbe_itwffCZYBZQNa2S9bqOAeAng8YufVsXIdJy6G5ta5vkRMRatMJ8SsgR7ZnQoyACBnKZEL575oC4QhWpQ"/>
+</div>
+<div class="absolute top-20 left-40 w-4 h-4 bg-risk-critical rounded-full status-pulse opacity-80" style="color: #ff2d55"></div>
+<div class="absolute top-16 left-12 w-3 h-3 bg-risk-high rounded-full status-pulse opacity-80" style="color: #ff6a00"></div>
+<div class="absolute bottom-10 right-20 w-3 h-3 bg-risk-critical rounded-full status-pulse opacity-80" style="color: #ff2d55"></div>
+<div class="absolute bottom-4 left-4 z-10">
+<span class="text-[10px] text-on-surface-variant bg-surface/80 px-2 py-1 rounded backdrop-blur-md border border-glass-border">Active Geo-Sentinel v2.4</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interaction for KPI numbers
+        function animateCounter(id, target) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            let current = target * 0.95;
+            const increment = (target - current) / 60;
+            const timer = setInterval(() => {
+                current += increment;
+                el.innerText = Math.floor(current).toLocaleString();
+                if (current >= target) {
+                    el.innerText = target.toLocaleString();
+                    clearInterval(timer);
+                }
+            }, 20);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            animateCounter('count-tx', 1248302);
+            
+            // Random pulses for live feel
+            setInterval(() => {
+                const indicators = document.querySelectorAll('.status-pulse');
+                const random = Math.floor(Math.random() * indicators.length);
+                indicators[random].style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    indicators[random].style.transform = 'scale(1)';
+                }, 200);
+            }, 3000);
+        });
+    </script>
+</body></html>
