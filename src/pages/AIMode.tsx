@@ -284,8 +284,8 @@ Identify indicators of circular routing, layering structures, sanctions evasion,
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', paddingRight: 4 }}>
         
         {/* Terminal Status Card */}
-        <div className="glass-card" style={{ padding: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--cyan-400)', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div className="glass-card cyber-hud-card cyber-corners" style={{ padding: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk', textTransform: 'uppercase', marginBottom: 12 }} className="neon-text-cyan">
             <Terminal size={15} />
             Console Status
           </div>
@@ -296,7 +296,7 @@ Identify indicators of circular routing, layering structures, sanctions evasion,
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>ENGINE:</span>
-              <span style={{ color: '#fff' }}>GEMINI 1.5 FLASH</span>
+              <span style={{ color: '#fff' }}>GEMINI 3.5 FLASH</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>CIPHER MODE:</span>
@@ -306,8 +306,8 @@ Identify indicators of circular routing, layering structures, sanctions evasion,
         </div>
 
         {/* Investigated Assets & Memory */}
-        <div className="glass-card" style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--text-1)', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div className="glass-card cyber-hud-card cyber-corners laser-sweep" style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, fontFamily: 'Space Grotesk', textTransform: 'uppercase', marginBottom: 12 }} className="neon-text-violet">
             <Sparkles size={14} />
             Forensic Telemetry
           </div>
@@ -412,13 +412,13 @@ Identify indicators of circular routing, layering structures, sanctions evasion,
       </div>
 
       {/* RIGHT COLUMN: Terminal Chat Console */}
-      <div className="glass-card" style={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', border: '1.2px solid var(--border-cyan)' }}>
+      <div className="glass-card cyber-hud-card cyber-corners" style={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
         {/* Terminal Header */}
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-1)', background: 'rgba(2, 4, 10, 0.75)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-1)', background: 'rgba(2, 4, 10, 0.85)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cyan-400)', boxShadow: 'var(--cyan-glow-sm)' }} />
-            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 14, color: '#fff', letterSpacing: '0.05em' }}>COGNITIVE INVESTIGATION SHELL</span>
+            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 14, color: '#fff', letterSpacing: '0.05em' }} className="neon-text-cyan">COGNITIVE INVESTIGATION SHELL</span>
           </div>
           <button 
             className="btn-ghost" 

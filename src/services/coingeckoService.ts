@@ -11,20 +11,19 @@ export interface PriceData {
 }
 
 /**
- * Fetch token prices from CoinGecko with optional API key injection
+ * Fetch token prices from CoinGecko for Demo Plan
  */
 export async function fetchCoinGeckoPrices(): Promise<Partial<PriceData>> {
-  const hasKey = isValidKey(API_CONFIG.COINGECKO_API_KEY);
+  const apiKey = API_CONFIG.COINGECKO_API_KEY;
   const headers: Record<string, string> = {};
   
-  if (hasKey) {
-    // Inject CoinGecko demo key in standard header
-    headers['x-cg-demo-api-key'] = API_CONFIG.COINGECKO_API_KEY;
+  if (apiKey) {
+    headers['x-cg-demo-api-key'] = apiKey;
   }
 
   try {
     const data = await secureRequest<any>({
-      url: `${API_URLS.COINGECKO}/simple/price`,
+      url: 'https://api.coingecko.com/api/v3/simple/price',
       method: 'GET',
       apiName: 'CoinGecko',
       cacheTtlMs: 15000, // Cache for 15 seconds to prevent rate limits

@@ -575,3 +575,191 @@ html, body {
   scrollbar-width: none;
 }
 .nav-scroll::-webkit-scrollbar { display: none; }
+
+/* ── FUTURISTIC HUD FLASHY STYLING ──────────────────────────── */
+
+/* Glass Panel with Corner Tech Bracket Accents */
+.cyber-hud-card {
+  position: relative;
+  background: rgba(8, 12, 28, 0.75);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(0, 245, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 245, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
+}
+
+.cyber-hud-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(rgba(0, 245, 255, 0.02) 50%, rgba(0, 0, 0, 0) 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.cyber-hud-card:hover {
+  border-color: rgba(0, 245, 255, 0.45);
+  box-shadow: 0 12px 40px rgba(0, 245, 255, 0.15), 0 0 25px rgba(0, 245, 255, 0.25), inset 0 0 16px rgba(0, 245, 255, 0.1);
+  transform: translateY(-3px) scale(1.005);
+}
+
+/* Glowing Neon Text */
+.neon-text-cyan {
+  color: #00f5ff;
+  text-shadow: 0 0 8px rgba(0, 245, 255, 0.6), 0 0 15px rgba(0, 245, 255, 0.3);
+}
+
+.neon-text-violet {
+  color: #b44aff;
+  text-shadow: 0 0 8px rgba(180, 74, 255, 0.6), 0 0 15px rgba(180, 74, 255, 0.3);
+}
+
+.neon-text-red {
+  color: #ff0040;
+  text-shadow: 0 0 8px rgba(255, 0, 64, 0.6), 0 0 15px rgba(255, 0, 64, 0.3);
+}
+
+/* Interactive Glowing Tech Button */
+.cyber-btn-glow {
+  position: relative;
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.15) 0%, rgba(180, 74, 255, 0.15) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  color: #fff;
+  border-radius: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), inset 0 0 8px rgba(0, 245, 255, 0.1);
+  padding: 8px 16px;
+}
+
+.cyber-btn-glow::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.45), transparent);
+  transition: 0.5s;
+}
+
+.cyber-btn-glow:hover::before {
+  left: 100%;
+}
+
+.cyber-btn-glow:hover {
+  border-color: #00f5ff;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.4), 0 4px 20px rgba(180, 74, 255, 0.2), inset 0 0 12px rgba(0, 245, 255, 0.2);
+  color: #00f5ff;
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.4);
+}
+
+/* Visual Cyber Corner Brackets */
+.cyber-corners {
+  position: relative;
+}
+.cyber-corners::before, .cyber-corners::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: rgba(0, 245, 255, 0.6);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 10;
+}
+.cyber-corners::before {
+  top: 6px;
+  left: 6px;
+  border-width: 2px 0 0 2px;
+}
+.cyber-corners::after {
+  bottom: 6px;
+  right: 6px;
+  border-width: 0 2px 2px 0;
+}
+
+/* Red Critical Threat Corner Brackets */
+.cyber-corners-red {
+  position: relative;
+}
+.cyber-corners-red::before, .cyber-corners-red::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: rgba(255, 0, 64, 0.7);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 10;
+}
+.cyber-corners-red::before {
+  top: 6px;
+  left: 6px;
+  border-width: 2px 0 0 2px;
+}
+.cyber-corners-red::after {
+  bottom: 6px;
+  right: 6px;
+  border-width: 0 2px 2px 0;
+}
+
+/* Laser sweep animation for card background */
+.laser-sweep {
+  position: relative;
+}
+.laser-sweep::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, #00f5ff, transparent);
+  animation: laser-bounce 5s linear infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes laser-bounce {
+  0%, 100% { top: 0%; opacity: 0; }
+  5%, 95% { opacity: 0.8; }
+  50% { top: 100%; opacity: 0.8; }
+}
+
+/* Pulsing scanner overlay */
+.scanner-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 245, 255, 0.05) 0%, transparent 70%);
+  animation: radar-pulse 3s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes radar-pulse {
+  0% { transform: scale(0.6); opacity: 0.2; }
+  50% { opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* Rainbow Neon Gradient Text */
+.neon-gradient-text {
+  background: linear-gradient(90deg, #00f5ff, #b44aff, #ff0040, #00f5ff);
+  background-size: 300% 100%;
+  animation: gradient-flow 6s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@keyframes gradient-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}

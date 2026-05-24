@@ -455,23 +455,23 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', paddingRight: 4 }}>
         
         {/* Live Market Card */}
-        <div className="glass-card" style={{ padding: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--cyan-400)', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div className="glass-card cyber-hud-card cyber-corners laser-sweep" style={{ padding: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk', textTransform: 'uppercase', marginBottom: 12 }} className="neon-text-cyan">
             <TrendingUp size={15} />
             Live Market Analytics
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-              <span style={{ color: 'var(--text-3)' }}>BTC Volatility</span>
+              <span style={{ color: 'var(--text-2)' }}>BTC Volatility</span>
               <span style={{ color: 'var(--risk-low)', fontWeight: 600 }}>1.84% (STABLE)</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-              <span style={{ color: 'var(--text-3)' }}>ETH Gas</span>
+              <span style={{ color: 'var(--text-2)' }}>ETH Gas</span>
               <span style={{ color: 'var(--cyan-400)', fontFamily: 'JetBrains Mono' }}>14 Gwei</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-              <span style={{ color: 'var(--text-3)' }}>Active Feed Hops</span>
+              <span style={{ color: 'var(--text-2)' }}>Active Feed Hops</span>
               <span style={{ color: 'var(--violet-400)' }}>4 Node Chains</span>
             </div>
           </div>
@@ -499,8 +499,8 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
         </div>
 
         {/* Live Threat Alert Engine */}
-        <div className="glass-card" style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--risk-critical)', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div className="glass-card cyber-hud-card cyber-corners-red" style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, fontFamily: 'Space Grotesk', textTransform: 'uppercase', marginBottom: 12 }} className="neon-text-red">
             <ShieldAlert size={14} className="animate-pulse" />
             Whale Detection Hub
           </div>
@@ -513,11 +513,11 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
                 <div 
                   key={w.id || idx} 
                   style={{ 
-                    borderBottom: '1px solid var(--border-0)', 
-                    paddingBottom: 8,
-                    background: isHuge ? 'rgba(255, 0, 64, 0.03)' : 'none',
-                    borderRadius: 4,
-                    padding: '6px 4px'
+                  borderBottom: '1px solid var(--border-0)', 
+                  paddingBottom: 8,
+                  background: isHuge ? 'rgba(255, 0, 64, 0.03)' : 'none',
+                  borderRadius: 4,
+                  padding: '6px 4px'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -557,10 +557,10 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
       </div>
 
       {/* CENTER COLUMN: 3D Globe / Dynamic Network Graph */}
-      <div className="glass-card" style={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+      <div className="glass-card cyber-hud-card cyber-corners" style={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         
         {/* Tabs switcher */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10, background: 'rgba(2,4,10,0.7)' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10, background: 'rgba(2,4,10,0.85)' }}>
           <div style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => setActiveVisualizer('3d')}
@@ -598,7 +598,7 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'JetBrains Mono', color: 'var(--text-3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'JetBrains Mono', color: 'var(--cyan-400)' }}>
             <span className="status-dot status-dot-green animate-pulse" />
             TELEMETRY NODE ACTIVE
           </div>
@@ -607,7 +607,10 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
         {/* Display Container */}
         <div style={{ flex: 1, background: '#02040a', position: 'relative' }}>
           {activeVisualizer === '3d' ? (
-            <div ref={globeContainerRef} style={{ width: '100%', height: '100%', minHeight: 400 }} />
+            <>
+              <div ref={globeContainerRef} style={{ width: '100%', height: '100%', minHeight: 400 }} />
+              <div className="scanner-overlay" />
+            </>
           ) : (
             <div style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}>
               <ForceGraph2D
@@ -640,14 +643,15 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
             position: 'absolute',
             bottom: 12,
             left: 12,
-            background: 'rgba(5, 8, 18, 0.75)',
-            border: '1px solid var(--border-1)',
+            background: 'rgba(5, 8, 18, 0.85)',
+            border: '1px solid rgba(0, 245, 255, 0.25)',
             borderRadius: 6,
             padding: '6px 10px',
             fontSize: 9.5,
-            color: 'var(--text-2)',
+            color: '#00f5ff',
             pointerEvents: 'none',
             fontFamily: 'JetBrains Mono',
+            boxShadow: '0 0 10px rgba(0, 245, 255, 0.15)'
           }}>
             SYSTEM: ALCHEMY WEBSOCKET & Binance Stream Connected
           </div>
@@ -658,8 +662,8 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflow: 'hidden' }}>
         
         {/* Live Transaction Feed List */}
-        <div className="glass-card" style={{ padding: 14, flex: '1 1 50%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--cyan-400)', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div className="glass-card cyber-hud-card cyber-corners" style={{ padding: 14, flex: '1 1 50%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk', textTransform: 'uppercase', marginBottom: 12 }} className="neon-text-cyan">
             <Activity size={14} className="animate-pulse" />
             Live Tx Feed (Streaming)
           </div>
@@ -710,8 +714,8 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
         </div>
 
         {/* Transaction Intelligence Panel */}
-        <div className="glass-card" style={{ padding: 14, flex: '1 1 50%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--violet-400)', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div className="glass-card cyber-hud-card cyber-corners laser-sweep" style={{ padding: 14, flex: '1 1 50%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk', textTransform: 'uppercase', marginBottom: 12 }} className="neon-text-violet">
             <Cpu size={14} />
             Forensic Intelligence
           </div>
@@ -757,7 +761,7 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
                     <AlertTriangle size={15} color="var(--risk-critical)" />
                     <span style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>Threat Rank</span>
                   </div>
-                  <span style={{ fontSize: 16, fontFamily: 'Space Grotesk', fontWeight: 900, color: 'var(--risk-critical)' }}>
+                  <span style={{ fontSize: 16, fontFamily: 'Space Grotesk', fontWeight: 900, color: 'var(--risk-critical)' }} className="neon-text-red">
                     {selectedTx.fraudScore || 65}%
                   </span>
                 </div>
@@ -766,8 +770,8 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
                 <button
                   onClick={triggerGeminiTxAnalysis}
                   disabled={loadingAi}
-                  className="btn-primary"
-                  style={{ width: '100%', height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', background: 'linear-gradient(135deg, #b44aff, #00f5ff)', color: '#02040a', border: 'none', fontWeight: 800, fontSize: 11 }}
+                  className="cyber-btn-glow"
+                  style={{ width: '100%', height: 32, cursor: 'pointer', fontSize: 11 }}
                 >
                   {loadingAi ? (
                     <>
@@ -788,7 +792,6 @@ Synthesize structural laundering risks, structuring indicators (smurfing/mixer i
                     background: 'rgba(5, 8, 18, 0.9)',
                     border: '1px solid var(--border-violet)',
                     borderRadius: 8,
-                    padding: 12,
                     fontSize: 11,
                     lineHeight: 1.5,
                     color: 'var(--text-2)',

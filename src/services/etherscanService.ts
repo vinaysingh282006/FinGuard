@@ -28,11 +28,14 @@ export async function getEthereumWalletIntel(address: string, ethPriceUsd = 3100
   const cleanAddr = address.trim().toLowerCase();
   const hasKey = isValidKey(API_CONFIG.ETHERSCAN_API_KEY);
 
+  const isProduction = import.meta.env.PROD || !window.location.hostname.includes('localhost');
+  const etherscanUrl = isProduction ? API_URLS.ETHERSCAN_DIRECT : API_URLS.ETHERSCAN;
+
   if (hasKey) {
     try {
       // 1. Fetch balance via Etherscan module
       const balanceData = await secureRequest<{ status: string; message: string; result: string }>({
-        url: API_URLS.ETHERSCAN,
+        url: etherscanUrl,
         apiName: 'Etherscan',
         cacheTtlMs: 30000, // Cache for 30s
         params: {
@@ -49,7 +52,7 @@ export async function getEthereumWalletIntel(address: string, ethPriceUsd = 3100
 
       // 2. Fetch transaction history
       const txData = await secureRequest<{ status: string; message: string; result: any }>({
-        url: API_URLS.ETHERSCAN,
+        url: etherscanUrl,
         apiName: 'Etherscan',
         cacheTtlMs: 30000,
         params: {
