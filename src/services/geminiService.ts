@@ -1,18 +1,18 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { API_CONFIG, isValidKey } from '../config/api';
 
-let genAIClient: GoogleGenerativeAI | null = null;
+let genAIClient: GoogleGenAI | null = null;
 
-// Initialize Google Generative AI safely
-function getClient(): GoogleGenerativeAI | null {
+// Initialize Google Gen AI safely
+function getClient(): GoogleGenAI | null {
   if (genAIClient) return genAIClient;
-
+  
   if (isValidKey(API_CONFIG.GEMINI_API_KEY)) {
     try {
-      genAIClient = new GoogleGenerativeAI(API_CONFIG.GEMINI_API_KEY);
+      genAIClient = new GoogleGenAI({ apiKey: API_CONFIG.GEMINI_API_KEY });
       return genAIClient;
     } catch (e) {
-      console.error('Failed to initialize GoogleGenerativeAI client:', e);
+      console.error('Failed to initialize GoogleGenAI client:', e);
     }
   }
   return null;
@@ -26,7 +26,7 @@ export async function generateAIResponse(
   systemInstruction?: string
 ): Promise<string> {
   const client = getClient();
-
+  
   if (!client) {
     return `### AI Threat Console Error
 VITE_GEMINI_API_KEY is not configured. Please supply a valid Google Gemini API Key in your environment variables/secrets.
@@ -37,14 +37,13 @@ VITE_GEMINI_API_KEY is not configured. Please supply a valid Google Gemini API K
   }
 
   try {
-    const model = client.getGenerativeModel({
-      model: 'gemini-1.5-flash-latest',
-      ...(systemInstruction ? { systemInstruction } : {}),
+    const response = await client.models.generateContent({
+      model: 'gemini-3.5-flash',
+      contents: prompt,
+      config: systemInstruction ? { systemInstruction } : undefined,
     });
-
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    return text;
+    
+    return response.text || '';
   } catch (error: any) {
     console.error('Gemini API call failed:', error);
     return `### AI Threat Console Connection Error
@@ -67,7 +66,7 @@ export async function generateAIResponseStream(
   systemInstruction?: string
 ): Promise<string> {
   const client = getClient();
-
+  
   if (!client) {
     const errText = `### AI Threat Console Error\nVITE_GEMINI_API_KEY is not configured. Please supply a valid Google Gemini API Key in your environment variables/secrets.\n\n**How to set up:**\n1. Create a secret/environment variable named \`VITE_GEMINI_API_KEY\`\n2. Set it to your Google AI Studio API Key.`;
     onChunk(errText);
@@ -76,20 +75,20 @@ export async function generateAIResponseStream(
   }
 
   try {
-    const model = client.getGenerativeModel({
-      model: 'gemini-1.5-flash-latest',
-      ...(systemInstruction ? { systemInstruction } : {}),
+    const responseStream = await client.models.generateContentStream({
+      model: 'gemini-3.5-flash',
+      contents: prompt,
+      config: systemInstruction ? { systemInstruction } : undefined,
     });
-
-    const result = await model.generateContentStream(prompt);
+    
     let completeText = '';
-
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
+    
+    for await (const chunk of responseStream) {
+      const chunkText = chunk.text || '';
       completeText += chunkText;
       onChunk(completeText);
     }
-
+    
     if (onComplete) onComplete(completeText);
     return completeText;
   } catch (error: any) {
