@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { useStore } from '../../store/useStore';
 
@@ -22,6 +22,8 @@ export default function AICoreOrb({ width = 140, height = 140 }) {
   const threatIndex = useStore((state) => state.stats?.threatIndex || 42);
   const demoActive = useStore((state) => state.demoActive);
   
+  const [webGlSupported, setWebGlSupported] = useState(true);
+  
   // We use ref to pass values into the animation loop dynamically without re-creating the WebGL context
   const configRef = useRef(getCoreConfig(threatIndex));
 
@@ -33,8 +35,23 @@ export default function AICoreOrb({ width = 140, height = 140 }) {
     const container = containerRef.current;
     if (!container) return;
 
-    // 1. WebGL Renderer & Scene
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    let renderer = null;
+    let geometry = null;
+    let material = null;
+    let ringGeom = null;
+    let ringMat = null;
+    let animationFrameId = null;
+    let clock = new THREE.Clock();
+
+    // 1. WebGL Renderer & Scene Setup with Graceful Fallback
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (e) {
+      console.warn("WebGL Renderer creation failed, falling back to CSS/SVG Core Orb:", e);
+      setWebGlSupported(false);
+      return;
+    }
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
@@ -60,7 +77,7 @@ export default function AICoreOrb({ width = 140, height = 140 }) {
 
     // 4. Geometry setup (Particle Sphere)
     const particleCount = 750;
-    const geometry = new THREE.BufferGeometry();
+    geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const originalPositions = new Float32Array(particleCount * 3);
 
@@ -85,7 +102,7 @@ export default function AICoreOrb({ width = 140, height = 140 }) {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
     // 5. Material
-    const material = new THREE.PointsMaterial({
+    material = new THREE.PointsMaterial({
       size: 2.2,
       map: particleTexture,
       transparent: true,
@@ -97,8 +114,8 @@ export default function AICoreOrb({ width = 140, height = 140 }) {
     scene.add(particleSystem);
 
     // 6. Ring Accents (Orbit ring)
-    const ringGeom = new THREE.RingGeometry(29, 30, 64);
-    const ringMat = new THREE.MeshBasicMaterial({
+    ringGeom = new THREE.RingGeometry(29, 30, 64);
+    ringMat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(configRef.current.color),
       side: THREE.DoubleSide,
       transparent: true,
@@ -108,10 +125,6 @@ export default function AICoreOrb({ width = 140, height = 140 }) {
     const ring = new THREE.Mesh(ringGeom, ringMat);
     ring.rotation.x = Math.PI / 3;
     scene.add(ring);
-
-    // 7. Animation Loop
-    let animationFrameId;
-    let clock = new THREE.Clock();
 
     const animate = () => {
       const elapsed = clock.getElapsedTime();
@@ -163,19 +176,115 @@ export default function AICoreOrb({ width = 140, height = 140 }) {
 
     // 8. Cleanup
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      renderer.dispose();
-      geometry.dispose();
-      material.dispose();
-      ringGeom.dispose();
-      ringMat.dispose();
-      if (container.contains(renderer.domElement)) {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (renderer) renderer.dispose();
+      if (geometry) geometry.dispose();
+      if (material) material.dispose();
+      if (ringGeom) ringGeom.dispose();
+      if (ringMat) ringMat.dispose();
+      if (renderer && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
   }, [width, height]);
 
   const activeConf = getCoreConfig(threatIndex);
+
+  // Pure SVG/CSS glowing animated fallback orb if WebGL is unavailable
+  if (!webGlSupported) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div 
+          style={{ 
+            width, 
+            height, 
+            position: 'relative',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'radial-gradient(circle, rgba(0,245,255,0.02) 0%, transparent 70%)',
+            boxShadow: `inset 0 0 20px rgba(${threatIndex >= 81 ? '255,0,64' : '0,245,255'}, 0.03)`
+          }}
+        >
+          {/* Glowing central orb */}
+          <div style={{
+            position: 'absolute',
+            width: width * 0.42,
+            height: height * 0.42,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${activeConf.color}55 0%, rgba(0,0,0,0) 80%)`,
+            boxShadow: `0 0 30px ${activeConf.color}aa`,
+            animation: 'orb-pulse 2.2s infinite ease-in-out'
+          }} />
+          
+          {/* Core dot */}
+          <div style={{
+            position: 'absolute',
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            background: activeConf.color,
+            boxShadow: `0 0 12px #fff, 0 0 20px ${activeConf.color}`,
+            animation: 'core-glow 1.1s infinite alternate ease-in-out'
+          }} />
+
+          {/* Glowing orbital rings */}
+          <svg width={width} height={height} style={{ position: 'absolute', overflow: 'visible' }}>
+            <circle cx={width/2} cy={height/2} r={width * 0.32} fill="none" stroke={activeConf.color} strokeWidth="1.2" strokeDasharray="4,12" style={{ transformOrigin: 'center', animation: 'orb-spin-clockwise 9s linear infinite', opacity: 0.7 }} />
+            <circle cx={width/2} cy={height/2} r={width * 0.38} fill="none" stroke={activeConf.color} strokeWidth="0.8" strokeDasharray="2,8" style={{ transformOrigin: 'center', animation: 'orb-spin-counter 14s linear infinite', opacity: 0.4 }} />
+          </svg>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 8 }}>
+          <div style={{
+            fontFamily: 'JetBrains Mono',
+            fontSize: 9,
+            fontWeight: 700,
+            color: activeConf.color,
+            letterSpacing: '0.1em',
+            textShadow: `0 0 8px ${activeConf.color}66`,
+            textTransform: 'uppercase'
+          }}>
+            FTI CORE: {activeConf.label}
+          </div>
+          <div style={{
+            fontFamily: 'Space Grotesk',
+            fontSize: 16,
+            fontWeight: 700,
+            color: '#e2e8f0',
+            marginTop: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6
+          }}>
+            <span>INDEX {threatIndex}</span>
+            <span className="status-dot" style={{ color: activeConf.color, background: activeConf.color, width: 6, height: 6 }} />
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes orb-pulse {
+            0%, 100% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 0.95; }
+          }
+          @keyframes core-glow {
+            from { transform: scale(0.85); box-shadow: 0 0 8px #fff, 0 0 15px ${activeConf.color}; }
+            to { transform: scale(1.15); box-shadow: 0 0 16px #fff, 0 0 28px ${activeConf.color}; }
+          }
+          @keyframes orb-spin-clockwise {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes orb-spin-counter {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>

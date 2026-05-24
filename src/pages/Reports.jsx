@@ -39,7 +39,8 @@ export default function Reports() {
   // Pre-load form if a transaction is selected
   useEffect(() => {
     if (selectedTx) {
-      setCaseTitle(`Exploit / Laundering Flow [${selectedTx.hash.substring(0, 10)}]`);
+      const txHash = selectedTx.hash || '';
+      setCaseTitle(`Exploit / Laundering Flow [${txHash.substring(0, 10)}]`);
       setUrgency(selectedTx.threatLevel || 'HIGH RISK');
       setNarrative(selectedTx.aiReasoning || `Suspicious transfer of ${formatCurrency(selectedTx.valueUsd)} on ${selectedTx.chain}. Rules triggered: ${selectedTx.rulesTriggered?.join(', ') || 'None'}`);
     } else {

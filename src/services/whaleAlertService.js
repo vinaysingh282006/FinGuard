@@ -52,7 +52,8 @@ export function startWhaleMonitoring(store) {
       const recentTxResponse = await axios.get('https://mempool.space/api/mempool/recent');
       if (Array.isArray(recentTxResponse.data)) {
         recentTxResponse.data.forEach((tx) => {
-          const valueUsd = (tx.value / 1e8) * btcPrice;
+          if (!tx || !tx.txid) return;
+          const valueUsd = ((tx.value || 0) / 1e8) * btcPrice;
           // Filter only large on-chain transfers (> $100k USD)
           if (valueUsd >= 100000) {
             const whaleAlert = {

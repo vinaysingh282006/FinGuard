@@ -89,10 +89,10 @@ export default function AIFloatingPanel() {
   const generateSystemInstruction = () => {
     const memoryText = `
 SESSION MEMORY:
-- Visited Wallets: ${store.aiMemory.visitedAddresses.join(', ') || 'None'}
-- Investigated Transactions: ${store.aiMemory.investigatedTxs.join(', ') || 'None'}
-- Alerts Addressed: ${store.aiMemory.recentAlertsExplained.join(', ') || 'None'}
-- Previous Questions Asked: ${store.aiMemory.previousQuestions.join(' | ') || 'None'}
+- Visited Wallets: ${store.aiMemory?.visitedAddresses?.join(', ') || 'None'}
+- Investigated Transactions: ${store.aiMemory?.investigatedTxs?.join(', ') || 'None'}
+- Alerts Addressed: ${store.aiMemory?.recentAlertsExplained?.join(', ') || 'None'}
+- Previous Questions Asked: ${store.aiMemory?.previousQuestions?.join(' | ') || 'None'}
     `;
 
     return `You are FinGuard AI, an advanced AI financial analyst, cybersecurity investigator, blockchain intelligence assistant, and threat analysis copilot.
@@ -118,7 +118,9 @@ When answering questions, tie in the active context and the session memory varia
 
     let mockText = '';
     if (isCopilot) {
-      const entity = selectedTransaction ? `Tx [${selectedTransaction.hash.substring(0, 8)}]` : selectedAddress ? `Wallet [${selectedAddress.substring(0, 8)}]` : 'Active Network Node';
+      const txHash = selectedTransaction?.hash || '';
+      const walletAddr = selectedAddress || '';
+      const entity = selectedTransaction ? `Tx [${txHash.substring(0, 8)}]` : selectedAddress ? `Wallet [${walletAddr.substring(0, 8)}]` : 'Active Network Node';
       if (phase === 1) {
         mockText = `**[COPILOT PHASE 1: INGRESS RISK ANALYSIS]**\n\nInitiating investigation on **${entity}**:\n• **Sanctions Registry Match:** cross-checking against OFAC and global consolidated watchlists. Results: *CLEAN* or *INDIRECT CONNECTION* detected through intermediate transfers.\n• **IP/Geo Audit:** Source node mapped to high-risk location. Network access latency suggests VPN/proxy tunneling obfuscation.\n• **Account Age & Seed Origin:** Origin wallet is relatively new (created within 48 hours). Seed funds originated from a non-custodial decentralized liquidity pool.\n\n**Risk Scoring Assessment:** High probability of anonymous onboarding setup. Proceeding to Phase 2 for flow rate calculations...`;
       } else if (phase === 2) {
@@ -136,7 +138,8 @@ When answering questions, tie in the active context and the session memory varia
       } else if (selectedAddress && (prompt.toLowerCase().includes('wallet') || prompt.toLowerCase().includes('address') || prompt.toLowerCase().includes('forensic'))) {
         mockText = `**AML Wallet Forensics: Address ${selectedAddress}**\n\n• **Threat Classification:** High-Risk Layering Node.\n• **Historical Correlation:** 94% match with known structuring addresses routed through Tornado Cash mixers.\n• **Associated Volume:** $2.4M USD over 14 interactions.\n• **Behavioral Fingerprint:** High transaction frequency, short holding times (less than 3 minutes), and multi-asset routing.\n\n*Intelligence Suggestion:* Restrict outbound withdrawals for this node and draft a suspicious activity record (SAR).`;
       } else if (selectedTransaction && (prompt.toLowerCase().includes('threat') || prompt.toLowerCase().includes('explain') || prompt.toLowerCase().includes('tx'))) {
-        mockText = `**Threat Evaluation: Transaction ${selectedTransaction.hash.substring(0, 16)}...**\n\n• **Chain:** ${selectedTransaction.chain}\n• **Value:** $${Math.floor(selectedTransaction.valueUsd).toLocaleString()} USD\n• **Risk Score:** ${selectedTransaction.fraudScore}/100 (${selectedTransaction.threatLevel})\n• **Anomaly Signature:** ${selectedTransaction.reason || 'High volume transfer'}\n\n**Analysis:**\nThis transfer exhibits clear **layering behavior**. Funds were moved rapidly after deposit from an unknown exchange. Velocity filters flags this transaction due to the night-time execution and immediate split-transfer routing.`;
+        const txHash = selectedTransaction?.hash || '';
+        mockText = `**Threat Evaluation: Transaction ${txHash.substring(0, 16)}...**\n\n• **Chain:** ${selectedTransaction.chain}\n• **Value:** $${Math.floor(selectedTransaction.valueUsd).toLocaleString()} USD\n• **Risk Score:** ${selectedTransaction.fraudScore}/100 (${selectedTransaction.threatLevel})\n• **Anomaly Signature:** ${selectedTransaction.reason || 'High volume transfer'}\n\n**Analysis:**\nThis transfer exhibits clear **layering behavior**. Funds were moved rapidly after deposit from an unknown exchange. Velocity filters flags this transaction due to the night-time execution and immediate split-transfer routing.`;
       } else {
         mockText = `**Analysis Complete (FinGuard AI Platform):**\n\nBased on your prompt: *"${prompt}"*\n\n1. **Active Context:** Currently monitoring page **${activeTab}**.\n2. **Platform Diagnostics:** Threat index is at **${threatIndex}/100**. ${recentAlerts.length} security flags have been recorded.\n3. **Investigation Insight:** Standard transaction streams show moderate activity. We recommend running a "Tactical Anomalies Only" filter on the Live Feed page to isolate the high-risk flows.\n\n*For real-time generative intelligence, configure VITE_GEMINI_API_KEY in the .env.local file.*`;
       }
@@ -474,11 +477,11 @@ When answering questions, tie in the active context and the session memory varia
               <span className="status-dot status-dot-violet" style={{ width: 6, height: 6 }} />
               {selectedTransaction ? (
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  TXID: <strong style={{ color: '#fff' }}>{selectedTransaction.hash.substring(0, 12)}...</strong>
+                  TXID: <strong style={{ color: '#fff' }}>{(selectedTransaction.hash || '').substring(0, 12)}...</strong>
                 </span>
               ) : (
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  ADDR: <strong style={{ color: '#fff' }}>{selectedAddress.substring(0, 12)}...</strong>
+                  ADDR: <strong style={{ color: '#fff' }}>{(selectedAddress || '').substring(0, 12)}...</strong>
                 </span>
               )}
             </div>
@@ -555,19 +558,19 @@ When answering questions, tie in the active context and the session memory varia
               }}>
                 <div>
                   <span style={{ color: 'var(--violet-400)' }}>VISITED ADDRS:</span>{' '}
-                  {store.aiMemory.visitedAddresses.length > 0 
+                  {store.aiMemory?.visitedAddresses?.length > 0 
                     ? store.aiMemory.visitedAddresses.map(a => a.substring(0, 8) + '...').join(', ')
                     : 'Empty'}
                 </div>
                 <div>
                   <span style={{ color: 'var(--cyan-400)' }}>CHECKED TXS:</span>{' '}
-                  {store.aiMemory.investigatedTxs.length > 0 
+                  {store.aiMemory?.investigatedTxs?.length > 0 
                     ? store.aiMemory.investigatedTxs.map(t => t.substring(0, 8) + '...').join(', ')
                     : 'Empty'}
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-3)' }}>LAST QUESTION:</span>{' '}
-                  {store.aiMemory.previousQuestions[0] || 'None'}
+                  {store.aiMemory?.previousQuestions?.[0] || 'None'}
                 </div>
                 <button 
                   onClick={() => {

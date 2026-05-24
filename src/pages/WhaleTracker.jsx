@@ -212,8 +212,8 @@ RECOMMENDATION: Flag downstream addresses for automated isolation. Activate comp
                               <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700 }}>{w.chain}</span>
                             </div>
                           </td>
-                          <td><span className="address-chip">{w.from.substring(0, 15)}...</span></td>
-                          <td><span className="address-chip">{w.to.substring(0, 15)}...</span></td>
+                          <td><span className="address-chip">{(w.from || '').substring(0, 15)}...</span></td>
+                          <td><span className="address-chip">{(w.to || '').substring(0, 15)}...</span></td>
                           <td>
                             <span style={{ fontFamily: 'JetBrains Mono', fontSize: 12, color: 'var(--cyan-400)', fontWeight: 700 }}>
                               {formatCurrency(w.valueUsd)}

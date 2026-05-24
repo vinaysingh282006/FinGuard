@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useStore } from '../../store/useStore';
@@ -52,6 +52,7 @@ const RISK_COLORS = {
 
 export default function Globe3D() {
   const containerRef = useRef(null);
+  const [webGlSupported, setWebGlSupported] = useState(true);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -60,9 +61,18 @@ export default function Globe3D() {
     const width = container.clientWidth;
     const height = container.clientHeight || 500;
 
+    let scene = null;
+    let renderer = null;
+
     // 1. Scene & Renderer
-    const scene = new THREE.Scene();
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    try {
+      scene = new THREE.Scene();
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (e) {
+      console.warn("WebGL Context creation failed for 3D Globe, falling back to 2D radar scanning:", e);
+      setWebGlSupported(false);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
@@ -419,6 +429,132 @@ export default function Globe3D() {
       }
     };
   }, []);
+
+  // Cyberpunk 2D Tactical Sonar Radar Fallback if WebGL fails
+  if (!webGlSupported) {
+    return (
+      <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#02040a', overflow: 'hidden', minHeight: 450 }}>
+        {/* Sonar Radar Screen */}
+        <div style={{
+          position: 'relative',
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          border: '1.2px solid rgba(0, 245, 255, 0.15)',
+          background: 'radial-gradient(circle, rgba(0, 245, 255, 0.04) 0%, transparent 80%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: 'inset 0 0 30px rgba(0, 245, 255, 0.08)'
+        }}>
+          {/* Sweeper beam */}
+          <div style={{
+            position: 'absolute',
+            width: '50%',
+            height: '50%',
+            background: 'linear-gradient(45deg, rgba(0, 245, 255, 0.15) 0%, transparent 100%)',
+            transformOrigin: 'bottom right',
+            top: 0,
+            left: 0,
+            borderRadius: '100% 0 0 0',
+            animation: 'radar-sweep 5s linear infinite'
+          }} />
+
+          {/* Radar grids (concentric rings) */}
+          <div style={{ position: 'absolute', width: '70%', height: '70%', borderRadius: '50%', border: '1px dashed rgba(0, 245, 255, 0.06)' }} />
+          <div style={{ position: 'absolute', width: '40%', height: '40%', borderRadius: '50%', border: '1px solid rgba(0, 245, 255, 0.04)' }} />
+
+          {/* Crosshairs */}
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: 'rgba(0, 245, 255, 0.06)' }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 1, background: 'rgba(0, 245, 255, 0.06)' }} />
+
+          {/* Active Tactical Markers (representing hotspots) */}
+          {HUD_PINS.map((pin, i) => {
+            const colorHex = RISK_COLORS[pin.risk] || RISK_COLORS.low;
+            // Generate deterministic x, y coordinates from lat/lon to display on radar
+            const angle = (pin.lon * Math.PI) / 180;
+            const distance = (90 - pin.lat) * 1.0 + 30; // scale distance from center
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+
+            return (
+              <div 
+                key={i} 
+                style={{
+                  position: 'absolute',
+                  transform: `translate(${x}px, ${y}px)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {/* Blinking dot */}
+                <div style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: colorHex,
+                  boxShadow: `0 0 10px ${colorHex}`,
+                  animation: 'radar-ping 2s infinite ease-out'
+                }} />
+                
+                {/* Radar label */}
+                <div style={{
+                  position: 'absolute',
+                  whiteSpace: 'nowrap',
+                  background: 'rgba(2, 4, 10, 0.85)',
+                  border: `1px solid ${colorHex}33`,
+                  padding: '1px 4px',
+                  borderRadius: 3,
+                  fontSize: 7.5,
+                  color: '#94a3b8',
+                  top: 9,
+                  pointerEvents: 'none',
+                  fontFamily: 'JetBrains Mono'
+                }}>
+                  {pin.name.split(' ')[0]}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Diagnostic info overlay */}
+        <div style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          background: 'rgba(5, 8, 18, 0.85)',
+          border: '1px solid var(--border-cyan)',
+          borderRadius: 8,
+          padding: '10px 14px',
+          fontFamily: 'Inter',
+          fontSize: 10.5,
+          color: 'var(--text-2)',
+          maxWidth: 220,
+          boxShadow: 'var(--cyan-glow-sm)'
+        }}>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, color: 'var(--cyan-500)', textTransform: 'uppercase', marginBottom: 6 }}>Tactical 2D Radar</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div>SCANNER: <span style={{ color: 'var(--risk-low)', fontWeight: 600 }}>ONLINE</span></div>
+            <div>MODE: <span style={{ fontFamily: 'JetBrains Mono', color: '#fff' }}>2D TACTICAL COORDS</span></div>
+            <div>STATUS: <span style={{ color: 'var(--risk-high)', fontWeight: 600 }}>WEBGL ACCEL OFFLINE</span></div>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes radar-sweep {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes radar-ping {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3.5); opacity: 0; }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>

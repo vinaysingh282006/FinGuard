@@ -33,7 +33,8 @@ export function startMempoolFeed(store) {
       const response = await axios.get('https://mempool.space/api/mempool/recent');
       if (Array.isArray(response.data)) {
         response.data.slice(0, 5).forEach((tx) => {
-          const valueBtc = tx.value / 1e8;
+          if (!tx || !tx.txid) return;
+          const valueBtc = (tx.value || 0) / 1e8;
           const valueUsd = valueBtc * (store.prices.BTC || 95000);
           
           const rawTx = {

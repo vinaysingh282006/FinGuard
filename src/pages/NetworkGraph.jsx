@@ -74,6 +74,7 @@ export default function NetworkGraph() {
   const [hoveredNodeInfo, setHoveredNodeInfo] = useState(null);
   const [showSuspiciousOnly, setShowSuspiciousOnly] = useState(false);
   const [chainFilter, setChainFilter] = useState('ALL');
+  const [webGlSupported, setWebGlSupported] = useState(true);
 
   const nodesRef = useRef([]);
   const edgesRef = useRef([]);
@@ -132,37 +133,60 @@ export default function NetworkGraph() {
   // Three.js Scene Setup
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || nodes.length === 0) return;
+    if (!container || nodes.length === 0 || !webGlSupported) return;
 
     const width = container.clientWidth;
     const height = container.clientHeight || 500;
 
-    // 1. Scene & Renderer
-    const scene = new THREE.Scene();
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    let scene = null;
+    let renderer = null;
+    let camera = null;
+    let controls = null;
+    let nodesGroup = null;
+    let edgesGroup = null;
+    let sphereGeometry = null;
+    let nodeMeshes = [];
+    let edgeVisuals = [];
+    let ambient = null;
+    let animationFrameId = null;
+
+    let handleResize = null;
+    let handleMouseMove = null;
+    let handleNodeClick = null;
+
+    // 1. Scene & Renderer Setup with Try/Catch
+    try {
+      scene = new THREE.Scene();
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (e) {
+      console.warn("WebGL Context creation failed for NetworkGraph, falling back to 2D SVG Graph:", e);
+      setWebGlSupported(false);
+      return;
+    }
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
 
     // 2. Camera Setup
-    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
+    camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
     camera.position.set(0, 0, 95);
 
     // 3. Orbit Controls
-    const controls = new OrbitControls(camera, renderer.domElement);
+    controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.maxDistance = 250;
     controls.minDistance = 25;
 
     // 4. Create Node meshes in group
-    const nodesGroup = new THREE.Group();
+    nodesGroup = new THREE.Group();
     scene.add(nodesGroup);
 
     // Geometry templates
-    const sphereGeometry = new THREE.SphereGeometry(1, 16, 16);
+    sphereGeometry = new THREE.SphereGeometry(1, 16, 16);
     
-    const nodeMeshes = nodesRef.current.map(node => {
+    nodeMeshes = nodesRef.current.map(node => {
       // Calculate radius based on volume
       const radius = Math.sqrt(node.volume / 80000) * 0.5 + 0.6;
       const isCritical = node.riskLevel === 'critical';
@@ -205,10 +229,10 @@ export default function NetworkGraph() {
     });
 
     // 5. Create Edge lines & Flow particles
-    const edgesGroup = new THREE.Group();
+    edgesGroup = new THREE.Group();
     scene.add(edgesGroup);
 
-    const edgeVisuals = edgesRef.current.map(edge => {
+    edgeVisuals = edgesRef.current.map(edge => {
       const fromNode = nodesRef.current.find(n => n.id === edge.from);
       const toNode = nodesRef.current.find(n => n.id === edge.to);
       if (!fromNode || !toNode) return null;
@@ -251,14 +275,15 @@ export default function NetworkGraph() {
     }).filter(Boolean);
 
     // 6. Lighting
-    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    ambient = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambient);
 
     // 7. Raycaster for clicking / hovering nodes
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    const handleMouseMove = (event) => {
+    handleMouseMove = (event) => {
+      if (!renderer || !camera || !nodesGroup) return;
       // Calculate mouse position in normalized device coordinates
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -283,7 +308,8 @@ export default function NetworkGraph() {
     };
     renderer.domElement.addEventListener('mousemove', handleMouseMove);
 
-    const handleNodeClick = (event) => {
+    handleNodeClick = (event) => {
+      if (!camera || !nodesGroup) return;
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(nodesGroup.children);
       if (intersects.length > 0) {
@@ -305,10 +331,11 @@ export default function NetworkGraph() {
     renderer.domElement.addEventListener('click', handleNodeClick);
 
     // 8. Dynamic 3D Force-Directed Layout & Animation
-    let animationFrameId;
     const clock = new THREE.Clock();
 
     const animate = () => {
+      if (!renderer || !scene || !camera || !controls) return;
+
       const time = clock.getElapsedTime();
       const delta = clock.getDelta();
 
@@ -431,8 +458,8 @@ export default function NetworkGraph() {
     animate();
 
     // 9. Resize Handler
-    const handleResize = () => {
-      if (!container) return;
+    handleResize = () => {
+      if (!container || !renderer || !camera) return;
       const w = container.clientWidth;
       const h = container.clientHeight || 500;
       camera.aspect = w / h;
@@ -443,20 +470,26 @@ export default function NetworkGraph() {
 
     // Cleanup
     return () => {
-      window.removeEventListener('resize', handleResize);
-      renderer.domElement.removeEventListener('mousemove', handleMouseMove);
-      renderer.domElement.removeEventListener('click', handleNodeClick);
-      cancelAnimationFrame(animationFrameId);
-      controls.dispose();
-      renderer.dispose();
-      sphereGeometry.dispose();
-      nodesGroup.children.forEach(c => {
-        if (c.material) c.material.dispose();
-      });
-      edgesGroup.children.forEach(c => {
-        if (c.geometry) c.geometry.dispose();
-        if (c.material) c.material.dispose();
-      });
+      if (handleResize) window.removeEventListener('resize', handleResize);
+      if (renderer && renderer.domElement) {
+        if (handleMouseMove) renderer.domElement.removeEventListener('mousemove', handleMouseMove);
+        if (handleNodeClick) renderer.domElement.removeEventListener('click', handleNodeClick);
+      }
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (controls) controls.dispose();
+      if (renderer) renderer.dispose();
+      if (sphereGeometry) sphereGeometry.dispose();
+      if (nodesGroup) {
+        nodesGroup.children.forEach(c => {
+          if (c.material) c.material.dispose();
+        });
+      }
+      if (edgesGroup) {
+        edgesGroup.children.forEach(c => {
+          if (c.geometry) c.geometry.dispose();
+          if (c.material) c.material.dispose();
+        });
+      }
       nodeMeshes.forEach(nm => {
         if (nm.pulseRing) {
           nm.pulseRing.geometry.dispose();
@@ -464,25 +497,218 @@ export default function NetworkGraph() {
         }
       });
       edgeVisuals.forEach(ev => {
-        ev.particle.geometry.dispose();
-        ev.particle.material.dispose();
+        if (ev.particle) {
+          ev.particle.geometry.dispose();
+          ev.particle.material.dispose();
+        }
       });
-      if (container.contains(renderer.domElement)) {
+      if (renderer && container && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [nodes, showSuspiciousOnly]);
+  }, [nodes, showSuspiciousOnly, webGlSupported]);
 
   const criticalCount = nodes.filter(n => n.riskLevel === 'critical').length;
   const highCount = nodes.filter(n => n.riskLevel === 'high').length;
 
   return (
     <div style={{ position: 'relative', height: 'calc(100vh - 120px)', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border-1)' }}>
-      {/* 3D WebGL Canvas */}
-      <div 
-        ref={containerRef}
-        style={{ width: '100%', height: '100%', background: '#02040a', display: 'block' }}
-      />
+      {/* 3D WebGL Canvas or SVG Fallback */}
+      {webGlSupported ? (
+        <div 
+          ref={containerRef}
+          style={{ width: '100%', height: '100%', background: '#02040a', display: 'block' }}
+        />
+      ) : (
+        <div style={{ width: '100%', height: '100%', background: '#02040a', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          {/* Cyberpunk 2D Graph Fallback using SVG */}
+          <svg 
+            width="100%" 
+            height="100%" 
+            viewBox="-50 -50 100 100" 
+            preserveAspectRatio="xMidYMid meet"
+            style={{ display: 'block', maxHeight: '100%' }}
+          >
+            {/* Defs for gradients, glowing filters, etc. */}
+            <defs>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Render Edges */}
+            {edges
+              .filter(edge => !showSuspiciousOnly || edge.suspicious)
+              .map((edge) => {
+                const fromNode = nodes.find(n => n.id === edge.from);
+                const toNode = nodes.find(n => n.id === edge.to);
+                if (!fromNode || !toNode) return null;
+
+                const isSuspicious = edge.suspicious;
+                const edgeColor = isSuspicious ? '#ff0040' : 'rgba(255,255,255,0.06)';
+                const dashColor = isSuspicious ? '#ff0040' : '#00f5ff';
+
+                return (
+                  <g key={edge.id}>
+                    {/* Background link line */}
+                    <line 
+                      x1={fromNode.x} 
+                      y1={fromNode.y} 
+                      x2={toNode.x} 
+                      y2={toNode.y} 
+                      stroke={edgeColor} 
+                      strokeWidth={isSuspicious ? 1.0 : 0.4} 
+                    />
+                    {/* Animated flow dash line if suspicious */}
+                    {isSuspicious && (
+                      <line 
+                        x1={fromNode.x} 
+                        y1={fromNode.y} 
+                        x2={toNode.x} 
+                        y2={toNode.y} 
+                        stroke={dashColor} 
+                        strokeWidth="0.8" 
+                        strokeDasharray="2, 4"
+                        style={{ animation: 'svg-flow-dash 2s linear infinite' }}
+                        filter="url(#glow)"
+                      />
+                    )}
+                  </g>
+                );
+              })}
+
+            {/* Render Nodes */}
+            {nodes.map((node) => {
+              const radius = Math.sqrt(node.volume / 80000) * 0.4 + 0.8;
+              const isCritical = node.riskLevel === 'critical';
+              const isHigh = node.riskLevel === 'high';
+              const isSelected = store.selectedAddress === node.id;
+
+              return (
+                <g 
+                  key={node.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    const matchedTx = store.transactions.find(
+                      t => t.from === node.id || t.to === node.id
+                    );
+                    if (matchedTx) {
+                      store.setSelectedTransaction(matchedTx);
+                    } else {
+                      store.setSelectedAddress(node.id);
+                    }
+                  }}
+                  onMouseEnter={() => setHoveredNodeInfo(node)}
+                  onMouseLeave={() => setHoveredNodeInfo(null)}
+                >
+                  {/* Pulsing ring for critical nodes */}
+                  {isCritical && (
+                    <circle 
+                      cx={node.x} 
+                      cy={node.y} 
+                      r={radius + 1.5} 
+                      fill="none" 
+                      stroke={node.color} 
+                      strokeWidth="0.3"
+                      style={{ 
+                        transformOrigin: `${node.x}px ${node.y}px`, 
+                        animation: 'svg-node-pulse 2s infinite ease-out' 
+                      }} 
+                    />
+                  )}
+
+                  {/* Node core */}
+                  <circle 
+                    cx={node.x} 
+                    cy={node.y} 
+                    r={radius} 
+                    fill={node.color} 
+                    filter={isCritical || isHigh || isSelected ? 'url(#glow)' : undefined}
+                    stroke={isSelected ? '#fff' : 'rgba(0,0,0,0.5)'}
+                    strokeWidth={isSelected ? 0.6 : 0.2}
+                    opacity="0.9"
+                    style={{
+                      transition: 'transform 0.15s ease',
+                      transformOrigin: `${node.x}px ${node.y}px`
+                    }}
+                    className="svg-node-hover"
+                  />
+                  
+                  {/* Label for critical / high / selected nodes */}
+                  {(isCritical || isSelected) && (
+                    <text
+                      x={node.x}
+                      y={node.y - radius - 1}
+                      fill="#fff"
+                      fontSize="2"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      style={{
+                        fontFamily: 'JetBrains Mono',
+                        pointerEvents: 'none',
+                        textShadow: '0 0 2px rgba(0,0,0,0.9)'
+                      }}
+                    >
+                      {node.label}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+
+          {/* Diagnostic info overlay for SVG mode */}
+          <div style={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            background: 'rgba(5, 8, 18, 0.85)',
+            border: '1px solid var(--border-cyan)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            fontFamily: 'Inter',
+            fontSize: 10.5,
+            color: 'var(--text-2)',
+            maxWidth: 220,
+            boxShadow: 'var(--cyan-glow-sm)',
+            pointerEvents: 'none'
+          }}>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, color: 'var(--cyan-500)', textTransform: 'uppercase', marginBottom: 6 }}>Tactical 2D Graph</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div>SCANNER: <span style={{ color: 'var(--risk-low)', fontWeight: 600 }}>ONLINE</span></div>
+              <div>MODE: <span style={{ fontFamily: 'JetBrains Mono', color: '#fff' }}>2D SPRING LAYOUT</span></div>
+              <div>STATUS: <span style={{ color: 'var(--risk-high)', fontWeight: 600 }}>WEBGL ACCEL OFFLINE</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Styled css keyframes for SVG fallback */}
+      <style>{`
+        @keyframes svg-flow-dash {
+          to {
+            stroke-dashoffset: -20;
+          }
+        }
+        @keyframes svg-node-pulse {
+          0% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scale(1.6);
+            opacity: 0;
+          }
+        }
+        .svg-node-hover:hover {
+          transform: scale(1.3);
+          opacity: 1;
+        }
+      `}</style>
 
       {/* Hover Inspect overlay */}
       {hoveredNodeInfo && (
