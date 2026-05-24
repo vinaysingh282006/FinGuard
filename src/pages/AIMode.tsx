@@ -16,6 +16,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { generateAIResponseStream } from '../services/geminiService';
+import { lookupAddressIntel } from '../services/blockchainService';
 
 // Lightweight Markdown Formatter
 function TerminalMarkdown({ text }: { text: string }) {
@@ -138,19 +139,107 @@ Use terminal command macros or input queries below. How can I assist with your b
     // Save question to store memory
     store.addQuestionToMemory(query);
 
-    // Append user message
-    const userMsg = { role: 'user' as const, content: query };
-    setMessages((prev) => [...prev, userMsg]);
+    const cleanQuery = query.trim();
+    const isEthAddr = /^0x[a-fA-F0-9]{40}$/.test(cleanQuery);
+    const isBtcAddr = /^(bc1|[13])[a-zA-HJ-NP-Z1-9]{25,59}$/.test(cleanQuery);
+    const isSolAddr = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(cleanQuery);
+    const isTxHash = /^0x[a-fA-F0-9]{64}$/.test(cleanQuery);
 
-    // Append a placeholder streaming message
+    let finalPrompt = query;
+    let userDisplayMsg = query;
+    let initialAssistantMsg = 'Connecting to AI node...';
+
+    if (isEthAddr || isBtcAddr || isSolAddr) {
+      userDisplayMsg = `Analyze Address: ${cleanQuery}`;
+      initialAssistantMsg = `🔍 Resolving ledger for wallet address ${cleanQuery}...`;
+
+      // Show user message and resolving state immediately
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: userDisplayMsg },
+        { role: 'assistant', content: initialAssistantMsg, streaming: true }
+      ]);
+
+      const assistantIndex = messages.length + 1;
+
+      try {
+        const intel = await lookupAddressIntel(cleanQuery, store.prices);
+        const ledgerSummary = `Real On-Chain Ledger Data for Wallet Address: ${cleanQuery}
+- Current Balance (USD): $${intel.balanceUsd.toLocaleString()}
+- Lifetime Received: $${intel.totalReceivedUsd.toLocaleString()}
+- Lifetime Sent: $${intel.totalSentUsd.toLocaleString()}
+- On-Chain Transaction Count: ${intel.transactionCount}
+- Account Status: ${intel.status}
+- Behavioral Profile: ${intel.behavioralProfile}
+- First Active: ${intel.firstActive}
+- Last Active: ${intel.lastActive}`;
+
+        finalPrompt = `Perform a comprehensive security, money laundering, and risk audit on this blockchain wallet address using the following real-time ledger data.
+
+${ledgerSummary}
+
+Analyze if the transaction volumes, behavioral profile, and balances suggest suspicious movement, structuring (smurfing), mixing pool ingress, or compliance risk. Provide a structured audit report.`;
+
+        // Update with resolving complete and trigger Gemini stream
+        setMessages((prev) => {
+          const next = [...prev];
+          next[assistantIndex] = { role: 'assistant', content: `🔍 Resolved ledger for wallet. Commencing Gemini Cognitive Threat Audit...`, streaming: true };
+          return next;
+        });
+
+      } catch (err: any) {
+        finalPrompt = `Analyze the blockchain wallet address: ${cleanQuery}. Connection to public nodes failed, but please evaluate standard threat vectors, laundering patterns, and monitoring procedures for this address format.`;
+      }
+    } else if (isTxHash) {
+      userDisplayMsg = `Analyze Transaction: ${cleanQuery}`;
+      initialAssistantMsg = `🔍 Querying transaction hash ${cleanQuery} telemetry...`;
+
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: userDisplayMsg },
+        { role: 'assistant', content: initialAssistantMsg, streaming: true }
+      ]);
+
+      const assistantIndex = messages.length + 1;
+
+      let ledgerSummary = `Transaction Hash: ${cleanQuery} (Transaction is currently pending propagation)`;
+      const matchTx = store.transactions.find((t: any) => t.hash?.toLowerCase() === cleanQuery.toLowerCase());
+      if (matchTx) {
+        ledgerSummary = `Real Transaction Telemetry:
+- Tx Hash: ${cleanQuery}
+- Source: ${matchTx.from}
+- Destination: ${matchTx.to}
+- Value (USD): $${parseFloat(matchTx.valueUsd || 0).toLocaleString()}
+- Chain: ${matchTx.chain}
+- Gas Units: ${matchTx.gas || 'N/A'}`;
+      }
+
+      finalPrompt = `Perform a forensic security audit on this blockchain transaction hash:
+
+${ledgerSummary}
+
+Identify indicators of circular routing, layering structures, sanctions evasion, or other compliance concerns.`;
+
+      setMessages((prev) => {
+        const next = [...prev];
+        next[assistantIndex] = { role: 'assistant', content: `🔍 Found transaction telemetry. Commencing Gemini Cognitive Threat Audit...`, streaming: true };
+        return next;
+      });
+    } else {
+      // Normal Chat Flow
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: userDisplayMsg },
+        { role: 'assistant', content: initialAssistantMsg, streaming: true }
+      ]);
+    }
+
     const assistantIndex = messages.length + 1;
-    setMessages((prev) => [...prev, { role: 'assistant', content: 'Connecting to AI node...', streaming: true }]);
-
     const systemInstruction = `You are FinGuard X Cyberintelligence Agent. You analyze blockchain ledgers, EVM transactions, smart contracts, and crypto wallets. Decode laundering signatures, privacy shielding tunnels, Smurfing velocity anomalies, and bridge evasion. Structure responses clearly with bullet points and bold highlights.`;
 
     try {
       await generateAIResponseStream(
-        query,
+        finalPrompt,
         (currentText) => {
           setMessages((prev) => {
             const next = [...prev];
@@ -172,13 +261,13 @@ Use terminal command macros or input queries below. How can I assist with your b
         },
         systemInstruction
       );
-    } catch (err) {
+    } catch (err: any) {
       setMessages((prev) => {
         const next = [...prev];
         if (next[assistantIndex]) {
           next[assistantIndex] = {
             role: 'assistant',
-            content: 'Threat node failure. AI stream interrupted. Please verify VITE_GEMINI_API_KEY settings.',
+            content: `Threat node failure. AI stream interrupted. Details: ${err.message || err}`,
             streaming: false,
           };
         }

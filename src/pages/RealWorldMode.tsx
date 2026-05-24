@@ -269,6 +269,21 @@ export default function RealWorldMode() {
     const particles: any[] = [];
 
     const drawArc = (fromPin: any, toPin: any, color: string) => {
+      if (!fromPin || !toPin) return;
+
+      // Recycle older arcs to manage memory and performance
+      if (arcsGroup.children.length > 20) {
+        const oldestLine: any = arcsGroup.children[0];
+        const oldestParticle: any = arcsGroup.children[1];
+        arcsGroup.remove(oldestLine);
+        arcsGroup.remove(oldestParticle);
+        if (oldestLine.geometry) oldestLine.geometry.dispose();
+        if (oldestLine.material) oldestLine.material.dispose();
+        if (oldestParticle.geometry) oldestParticle.geometry.dispose();
+        if (oldestParticle.material) oldestParticle.material.dispose();
+        particles.shift();
+      }
+
       const start = latLonToVector3(fromPin.lat, fromPin.lon, globeRadius);
       const end = latLonToVector3(toPin.lat, toPin.lon, globeRadius);
       const dist = start.distanceTo(end);
@@ -281,7 +296,7 @@ export default function RealWorldMode() {
       const mat = new THREE.LineBasicMaterial({
         color: new THREE.Color(color),
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.5,
         blending: THREE.AdditiveBlending,
       });
       const line = new THREE.Line(geom, mat);
@@ -292,7 +307,7 @@ export default function RealWorldMode() {
       const pMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(color), blending: THREE.AdditiveBlending });
       const pMesh = new THREE.Mesh(pGeom, pMat);
       arcsGroup.add(pMesh);
-      particles.push({ mesh: pMesh, curve, progress: Math.random(), speed: 0.2 + Math.random() * 0.15 });
+      particles.push({ mesh: pMesh, curve, progress: 0, speed: 0.35 + Math.random() * 0.2 });
     };
 
     // Draw some starter arcs
@@ -302,6 +317,7 @@ export default function RealWorldMode() {
     drawArc(GLOBE_PINS[0], GLOBE_PINS[1], '#00d68f'); // NY to London
 
     const clock = new THREE.Clock();
+    let lastTxCount = useStore.getState().transactions.length;
 
     const animate = () => {
       const time = clock.getElapsedTime();
@@ -309,6 +325,23 @@ export default function RealWorldMode() {
 
       globeGroup.rotation.y = time * 0.04;
       globeGroup.rotation.x = Math.sin(time * 0.015) * 0.1;
+
+      // Stream live transactions into 3D globe arcs in real-time
+      const currentTxs = useStore.getState().transactions;
+      if (currentTxs.length > lastTxCount) {
+        const diff = currentTxs.length - lastTxCount;
+        const newTxs = currentTxs.slice(0, Math.min(diff, 3));
+        newTxs.forEach((tx: any) => {
+          const hashVal = parseInt((tx.hash || '').substring(2, 6), 16) || 0;
+          const fromIdx = hashVal % GLOBE_PINS.length;
+          const toIdx = (hashVal + 3) % GLOBE_PINS.length;
+          const fromPin = GLOBE_PINS[fromIdx];
+          const toPin = GLOBE_PINS[toIdx];
+          const color = tx.fraudScore >= 60 ? '#ff0040' : '#00f5ff';
+          drawArc(fromPin, toPin, color);
+        });
+        lastTxCount = currentTxs.length;
+      }
 
       // Pulse rings
       rings.forEach((ring) => {
