@@ -38,7 +38,7 @@ VITE_GEMINI_API_KEY is not configured. Please supply a valid Google Gemini API K
 
   try {
     const model = client.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash-latest',
       ...(systemInstruction ? { systemInstruction } : {}),
     });
 
@@ -77,7 +77,7 @@ export async function generateAIResponseStream(
 
   try {
     const model = client.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash-latest',
       ...(systemInstruction ? { systemInstruction } : {}),
     });
 
