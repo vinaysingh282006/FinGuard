@@ -18,12 +18,15 @@ import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
 import AICoreOrb from './components/shared/AICoreOrb';
 import AIFloatingPanel from './components/layout/AIFloatingPanel';
+import RealWorldMode from './pages/RealWorldMode';
+import AIMode from './pages/AIMode';
 
 import {
   LayoutDashboard, Activity, Share2, Cpu, Globe,
   Bell, Search, Play, Square, ChevronRight,
   ShieldAlert, Zap, FileText, BarChart2,
-  AlertCircle, X, RefreshCw, Volume2, VolumeX
+  AlertCircle, X, RefreshCw, Volume2, VolumeX,
+  Radar, Terminal
 } from 'lucide-react';
 
 const PAGES = {
@@ -39,6 +42,8 @@ const PAGES = {
   upload:     { label: 'Upload & Scan',    icon: FileText,        group: 'Forensics & Reports' },
   analytics:  { label: 'Market Analytics', icon: BarChart2,       group: 'Forensics & Reports' },
   reports:    { label: 'Report Center',    icon: FileText,        group: 'Forensics & Reports' },
+  realworld:  { label: 'Real World Mode',  icon: Radar,           group: 'Advanced Ops' },
+  aimode:     { label: 'AI Mode',          icon: Terminal,        group: 'Advanced Ops' },
 };
 
 function SessionTimer() {
@@ -401,6 +406,8 @@ export default function App() {
       case 'upload':      return <Upload />;
       case 'analytics':   return <Analytics />;
       case 'reports':     return <Reports />;
+      case 'realworld':   return <RealWorldMode />;
+      case 'aimode':      return <AIMode />;
       default:            return <Dashboard />;
     }
   };

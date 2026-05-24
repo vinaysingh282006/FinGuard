@@ -30,7 +30,7 @@ export interface AddressIntelResult {
   address: string;
   status: string;
   riskScore: number;
-  riskLevel: 'SAFE' | 'WATCHLIST' | 'HIGH RISK' | 'CRITICAL' | 'ACTIVE LAUNDERING';
+  riskLevel: 'SAFE' | 'WATCHLIST' | 'HIGH RISK' | 'CRITICAL' | 'ACTIVE LAUNDERING' | 'FRAUD NETWORK DETECTED';
   owner: string;
   behavioralProfile: string;
   totalReceivedUsd: number;
